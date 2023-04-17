@@ -32,7 +32,7 @@ writetable(T,'results.csv','WriteRowNames',true)
 %adaptive_plot(YR(1),YU(1),VR(1),VU(1),VUR(1),9,corr(1))
 
 %% Form locus of B-minimax estimates
-%minimax_locus_plot(YR(1),YU(1),VR(1),VU(1),VUR(1),9,corr(1))
+minimax_locus_plot(YR(1),YU(1),VR(1),VU(1),VUR(1),corr(1))
 %minimax_prior_plot(YR(1),YU(1),VR(1),VU(1),VUR(1),9,corr(1))
 
  
