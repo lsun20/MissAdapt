@@ -15,9 +15,11 @@ All R scripts for implementing the adaptive estimator are included in the folder
 
 `adaptive_estimate.m` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates via an instantaneous lookup table.
 
+`const_estimate.m` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates via an instantaneous lookup table where the worst-case risk is constrained to be no more than {5%,15%,20%} of Y_U.  The default is set to 20%.
+
 `minimax_locus_plot.m` : a function that takes the input of the pre-tabulated solutions and outputs the locus of B-minimax estimates via an instantaneous lookup table.  The oracle risk function (risk of each B-minimax estimator) as well as the risk function of the adaptive estimator are also plotted.
 
-`example.m` : an example script that calls `adaptive_estimate.m` and output the adaptive results in a formatted csv file; it also calls `minimax_locus_plot.m` and output the B-minimax locus plot along with risk functions.
+`example.m` : an example script that calls `adaptive_estimate.m` and `const_estimate.m` and output the adaptive results in a formatted csv file; it also calls `minimax_locus_plot.m` and output the B-minimax locus plot along with risk functions.
 
 ## R scripts
 
