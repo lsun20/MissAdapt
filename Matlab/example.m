@@ -12,8 +12,8 @@ disp('The over-id test statistic is')
 tO = YO./sqrt(VO);
 disp(tO)
 disp('The efficient estimator is')
-CUE = YU - VUO./VO .* YO;
-disp(CUE)
+GMM = YU - VUO./VO .* YO;
+disp(GMM)
 disp('The correlation coefficient is')
 corr = VUO./sqrt(VO)./sqrt(VU);
 disp(corr)
@@ -21,11 +21,12 @@ disp(corr)
 %% Read in normalized estimates and scale them up for the application
 % will write to sim_results/ a formatted table for each parameter
 %%
-[results] = adaptive_estimate(YR(1),YU(1),VR(1),VU(1),VUR(1),9,corr(1))
+[results] = adaptive_estimate(YR(1),YU(1),VR(1),VU(1),VUR(1),corr(1))
 T = array2table(results)
-T.Properties.VariableNames(1:3) = {'Fully nonlinear','Adaptive soft-threshold',...
+T.Properties.VariableNames(1:7) = {'Y_U','Y_R',...
+    'Y_O','GMM','Fully nonlinear','Adaptive soft-threshold',...
     'Pre-test'}
-T.Properties.RowNames(1:4) = {'Estimate','Worst-case Regret','Threshold','SURE'}
+T.Properties.RowNames(1:4) = {'Estimate','Std Error','Max Regret','Threshold'}
 writetable(T,'results.csv','WriteRowNames',true)
 % plot risk functions
 %adaptive_plot(YR(1),YU(1),VR(1),VU(1),VUR(1),9,corr(1))

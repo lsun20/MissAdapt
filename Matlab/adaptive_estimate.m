@@ -1,12 +1,15 @@
 function [results] = ...
-    adaptive_estimate(YR,YU,VR,VU,VUR,B_grid,corr_str)
+    adaptive_estimate(YR,YU,VR,VU,VUR,corr_str,B_grid)
 % YR is the restricted estimate
 % YU is the unbiased estimate
-% B_grid is the upper bound on the scaled bias e.g. [0.5 1 2];
 % corr_str can be a string  e.g. 0.52 = '052' that is used to look up the
 % csv
 % corr_str can also be the numerical corr coef that is used to interpolate
 % the estimates
+% B_grid is the (optional) upper bound on the scaled bias e.g. [0.5 1 2];
+if nargin < 7 || isempty(B_grid)
+     B_grid = 9;
+end
     %% Over-id test
     YO = YR - YU;
     VO = VR - 2*VUR + VU;
@@ -15,7 +18,7 @@ function [results] = ...
     tO = YO/sqrt(VO);
     disp(tO)
     disp('The efficient estimator is')
-    CUE = YU - VUO/VO * YO;
+    CUE = YU - VUO/VO * YO; V_CUE = VU - VUO/VO *VUO;
     disp(CUE)
     disp('The correlation coefficient is')
     corr = VUO/sqrt(VO)/sqrt(VU);
@@ -107,6 +110,7 @@ function [results] = ...
                risk_function_ht_ttest(i) = interp1(Sigma_UO_grid,risk_ht_ttest_mat(i,:),abs(corr_str),'spline');
             end
             %% Use similation to calculate the risk function for the pre-test estimator that switches btw Y_U and Y_R
+            rng(1);
             sims = 100000;
             x = normrnd(0,1,[sims,1]);
             x_b = x*ones(1,Kb) + ones(sims,1)*b_grid';
@@ -121,14 +125,19 @@ function [results] = ...
             disp('The pre-test has worst-case adaptation regret')
             disp(max(risk_function_ht_ttest./risk_oracle))
             %% put everything in a matrix
-            results = zeros(4,3); 
-            results(1,1)=adaptive_nonlinear; results(2,1)=penalty_nonlinear;
-            results(4,1)=SURE;
-            results(1,2)=adaptive_st; results(2,2)=max(risk_function_st_adaptive./risk_oracle); 
-            results(3,2)=st; results(4,2)=SURE_st;
-            %results(1,3)=adaptive_ht; results(2,3)=max(risk_function_ht_adaptive./risk_oracle); results(3,3)=ht;
-            results(1,3)=pretest_ht; results(2,3)=max(risk_function_ht_ttest./risk_oracle); results(3,3)=1.96;
- 
+            results = zeros(4,7); 
+            results(1,1)=YU; results(2,1)=sqrt(VU); % report Y_U
+            results(3,1)=VU/V_CUE; 
+            results(1,2)=YR; results(2,2)=sqrt(VR); % report Y_R
+            results(1,3)=YO; results(2,3)=sqrt(VO); % report Y_O
+            results(1,4)=CUE; results(2,4)=sqrt(V_CUE); % report GMM
+           
+            results(1,5)=adaptive_nonlinear; results(3,5)=penalty_nonlinear; 
+            results(1,6)=adaptive_st; results(3,6)=max(risk_function_st_adaptive./risk_oracle); 
+            results(4,6)=st; 
+            results(1,7)=pretest_ht; results(3,7)=max(risk_function_ht_ttest./risk_oracle); 
+            results(4,7)=1.96;
+            
 
         end
     else
@@ -187,6 +196,7 @@ function [results] = ...
             disp('The pre-test has worst-case adaptation regret')
             %disp(Tbl(8,1)) %switches between Y_U and GMM
             %% Use similation to calculate the risk function for the pre-test estimator that switches btw Y_U and Y_R
+            rng(1);
             sims = 100000;
             x = normrnd(0,1,[sims,1]);
             x_b = x*ones(1,Kb) + ones(sims,1)*b_grid';
@@ -196,15 +206,18 @@ function [results] = ...
             % overwrite the pre-tabulated penalty term
             Tbl(8,1) = max(risk_function_ht_ttest./risk_oracle);
             %% put everything in a matrix
-            results = zeros(4,3); 
-            results(1,1)=adaptive_nonlinear; results(2,1)=penalty_nonlinear;
-            results(4,1)=SURE;
-            results(1,2)=adaptive_st; results(2,2)=Tbl(2,1); results(3,2)=st;
-            results(4,2)=SURE_st;
+            results = zeros(4,7);  
+            results(1,1)=YU; results(2,1)=sqrt(VU); % report Y_U
+            results(3,1)=VU/V_CUE; 
+            results(1,2)=YR; results(2,2)=sqrt(VR); % report Y_R
+            results(1,3)=YO; results(2,3)=sqrt(VO); % report Y_O
+            results(1,4)=CUE; results(2,4)=sqrt(V_CUE); % report GMM
+
+            results(1,5)=adaptive_nonlinear; results(3,5)=penalty_nonlinear; 
+            results(1,6)=adaptive_st; results(3,6)=Tbl(2,1); results(4,6)=st; 
             %results(1,3)=adaptive_ht; results(2,3)=Tbl(5,1); results(3,3)=ht;
-            results(1,3)=pretest_ht; results(2,3)=Tbl(8,1); results(3,3)=1.96;
+            results(1,7)=pretest_ht; results(3,7)=Tbl(8,1); results(4,7)=1.96;
  
-          
         end
     end
 end
