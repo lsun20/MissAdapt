@@ -33,8 +33,8 @@ print('The over-id test statistic is')
 tO <- YO / sqrt(VO);
 print(tO)
 print('The efficient estimator is')
-CUE <- YU - VUO /VO * YO;
-print(CUE)
+GMM <- YU - VUO /VO * YO;
+print(GMM)
 print('The correlation coefficient is')
 corr <- VUO/sqrt(VO)/sqrt(VU);
 print(corr)
@@ -51,7 +51,7 @@ for (i in seq(1,Ky,1)) {
 psi.grid.extrap <- splinefun(policy$y.grid,psi.grid, method = "natural")
 t_tilde <- psi.grid.extrap(tO) # extrapolate for the adaptive estimate
 
-adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + CUE
+adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + GMM
 
 print('The adaptive estimate is')
 print(adaptive_nonlinear)
@@ -66,7 +66,7 @@ for (i in seq(1,Ky,1)) {
 psi.const.grid.extrap <- splinefun(policy$y.grid,psi.const.grid, method = "natural")
 t_tilde_const <- psi.const.grid.extrap(tO) # extrapolate for the adaptive estimate
 
-adaptive_nonlinear_const <- VUO/sqrt(VO) * t_tilde_const + CUE
+adaptive_nonlinear_const <- VUO/sqrt(VO) * t_tilde_const + GMM
 
 print('The adaptive estimate, constrained to increase the worst-case risk by no more than 20%,  is')
 print(adaptive_nonlinear_const)
@@ -77,6 +77,6 @@ st.function <- splinefun(Sigma_UO_grid,thresholds$st.mat, method = "fmm", ties =
 st <- st.function(abs(corr))
 print(st)
 print('The adaptive soft-thresholded estimate is')
-adaptive_st <- VUO/sqrt(VO) * ((tO > st)*(tO - st) + (tO < -st)*(tO + st)) + CUE
+adaptive_st <- VUO/sqrt(VO) * ((tO > st)*(tO - st) + (tO < -st)*(tO + st)) + GMM
 print(adaptive_st)
 
