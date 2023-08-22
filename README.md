@@ -15,12 +15,12 @@ Here we provide an example usage of the adaptive estimator in the context of:
 
 Dobkin, Carlos, Amy Finkelstein, Raymond Kluender, and Matthew J. Notowidigdo. 2018. "The Economic Consequences of Hospital Admissions." American Economic Review, 108 (2): 308-52.
 
-In this example, the parameter of interest is the contemporaneous impact of hospitalization on out-of-pocket medical spending. The restricted estimator assumes away a confounding trend, and the robust estimator allows for a linear confounding trend.
+In this example, the parameter of interest is the contemporaneous impact of hospitalization on out-of-pocket medical spending (dollar per year). The restricted estimator assumes away a confounding trend, and the robust estimator allows for a linear confounding trend. If there is indeed no confounding trend, the restricted estimator is more precise. However, we can not be sure whether there is no confounding trend or not. Instead, the adaptive estimator pools information across the restricted and and the robust estimates to arrive at a single estimate that balances efficiency and robustness.
 
 This example can be implemented using either the Matlab or R script.  Please note that the script assumes that the `/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
 	
 ### 1. Load data
-We first load the robust and restricted estimates for the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix. Note that the `VUR` is similar to `VR` because this setting is close to hausman setting where consider the Hausman setting where `YR` is efficient under the restriction b = 0. 
+We first load the typical data from robustness checks: the robust and restricted estimates for the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix. Note that the `VUR` is similar to `VR` because this setting is close to the Hausman setting where where `YR` is efficient under the restriction of no confounding bias. 
 ```r
 YR <- 2409; VR <- 221^2; # the restricted estimator
 YU <- 2217; VU <- 257^2; # the robust estimator
@@ -43,20 +43,23 @@ VUO <- (VUR - VU); corr <- VUO/sqrt(VO)/sqrt(VU);
 
 ### 3. Calculate the Adaptive Estimate based on Interpolation
 Based on the correlation coefficient, we interpolate adaptive estimator `psi.grid.extrap` based on pre-tabulated results in the `/lookup_tables/` directory. We then input `psi.grid.extrap` with the over-ID test statistic `tO`, which returns the adaptive estimate:
-```
+```r
 t_tilde <- psi.grid.extrap(tO) 
-adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + CUE
+adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + GMM
 ```
-The adaptive estimate is `adaptive_nonlinear=2302`.
+The adaptive estimate is `adaptive_nonlinear=2302`. The script also includes codes for approximating the adaptive estimator based on soft-thresholding. The various estimates are summarized in the following table. The metric of "max regret" is proposed to evaluate the the worst-case efficiency-robustness tradeoff of an estimator.  
+
+In this context, the high value of the max regret points out that the pre-test estimator, which alternates between using the restricted estimator $Y_{R}$ and robust estimator $Y_{U}$ based on the over-identification statistic, doesn't exhibit an optimal efficiency-robustness tradeoff. In other words, while it may perform well for some values of bias, there exist values of bias at which the pre-test estimator doesn't achieve good efficiency-robustness tradeoff.
+
+In contrast, the adaptive estimator provides a sensible summary of $Y_{U}$ and $Y_{R}$. Its max regret is low, indicating a more favorable efficiency-robustness tradeoff in the estimator's performance. Essentially, when an estimator's max regret is close to zero, its performance mirrors that of having complete knowledge about the exact extent of confounding bias (oracle performance).
+
+
 | Hospitalization  | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | Soft-threshold | Pre-test  |
 |-----------|------------|---------|--------|---------|----------|-----------|-------|
 | Year=0         | Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |
 |           | Std Error  | (257)   | (221)  | (160)   | (219)    |           |       |
-|           | Max Regret | 38%     | ∞      |         | ∞        | 15%       | 15%   |
+|           | Max Regret | 38%     | ∞      |  ∞       | 15%        | 15%       | 68%   |
 |           | Threshold  |         |        |         |          | 0.52      | 1.96  |
-
-### 4. Compare the risk performance of various estimators 
-To understand the 
 
 
 
