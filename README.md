@@ -1,6 +1,6 @@
 # MissAdapt
 
-This repository contains the code to replicate all numerical results in our paper ["Adapting to Misspecification"](https://arxiv.org/pdf/2305.14265.pdf).  It also provides MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants that we propose in the paper.  The vignette included here is also discussed in the Chamberlain online seminar recorded [here](https://youtu.be/JrDsCW-1h6A):
+This repository contains the code to replicate all numerical results in ["Adapting to Misspecification"](https://arxiv.org/pdf/2305.14265.pdf) by Armstrong, Kline and Sun (2023).  It also provides MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants that we propose in the paper.  The vignette included here is also discussed in the Chamberlain online seminar recorded [here](https://youtu.be/JrDsCW-1h6A).
 
 
 ## Introduction
@@ -10,7 +10,7 @@ All Matlab scripts for implementing the adaptive estimator are included in the f
 
 All R scripts for implementing the adaptive estimator are included in the folder `R/`.  
 
-## Example usage
+## A vignette for example usage
 Here we provide an example usage of the adaptive estimator in the context of:  
 
 Dobkin, Carlos, Amy Finkelstein, Raymond Kluender, and Matthew J. Notowidigdo. 2018. "The Economic Consequences of Hospital Admissions." American Economic Review, 108 (2): 308-52.
