@@ -48,11 +48,9 @@ t_tilde <- psi.grid.extrap(tO)
 adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + CUE
 ```
 The adaptive estimate is `adaptive_nonlinear=2302`.
-
-| Yrs since |            |         |        |         |          | Soft-     | Pre-  |
-| hospital  | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | threshold | test  |
+| Hospitalization  | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | Soft-threshold | Pre-test  |
 |-----------|------------|---------|--------|---------|----------|-----------|-------|
-| 0         | Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |
+| Year=0         | Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |
 |           | Std Error  | (257)   | (221)  | (160)   | (219)    |           |       |
 |           | Max Regret | 38%     | ∞      |         | ∞        | 15%       | 15%   |
 |           | Threshold  |         |        |         |          | 0.52      | 1.96  |
