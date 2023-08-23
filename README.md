@@ -22,8 +22,8 @@ This example can be implemented using either the Matlab or R script.  Please not
 ### 1. Load data
 We first load the typical data from robustness checks: the robust and restricted estimates for the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix. Note that the `VUR` is similar to `VR` because this setting is close to the Hausman setting where where `YR` is efficient under the restriction of no confounding bias. 
 ```r
-YR <- 2409; VR <- 221^2; # the restricted estimator
-YU <- 2217; VU <- 257^2; # the robust estimator
+YR <- 2409; VR <- 221^2; # the restricted estimator and its squared standard error
+YU <- 2217; VU <- 257^2; # the robust estimator and its squared standard error
 VUR <- 211^2; # the covariance between the restricted and robust esitmators
 ```
 ### 2. Calculate the Over-ID Test Statistic, Efficient estimator, and correlation coefficient
@@ -47,19 +47,19 @@ Based on the correlation coefficient, we interpolate adaptive estimator `psi.gri
 t_tilde <- psi.grid.extrap(tO) 
 adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + GMM
 ```
-The adaptive estimate is `adaptive_nonlinear=2302`. The script also includes codes for approximating the adaptive estimator based on soft-thresholding. The various estimates are summarized in the following table. The metric of "max regret" is proposed to evaluate the the worst-case efficiency-robustness tradeoff of an estimator.  
+The adaptive estimate is `adaptive_nonlinear=2302`. The script also includes codes for approximating the adaptive estimator based on soft-thresholding. The various estimates are summarized in the following table. The metric of "max regret" describes how much worse the mean squared error of the adaptive estimator can be than an oracle estimator that uses prior knowledge of the magnitude of the bias in the restricted estimator $Y_{R}$.  
 
 In this context, the high value of the max regret points out that the pre-test estimator, which alternates between using the restricted estimator $Y_{R}$ and robust estimator $Y_{U}$ based on the over-identification statistic, doesn't exhibit an optimal efficiency-robustness tradeoff. In other words, while it may perform well for some values of bias, there exist values of bias at which the pre-test estimator doesn't achieve good efficiency-robustness tradeoff.
 
 In contrast, the adaptive estimator provides a sensible summary of $Y_{U}$ and $Y_{R}$. Its max regret is low, indicating a more favorable efficiency-robustness tradeoff in the estimator's performance. Essentially, when an estimator's max regret is close to zero, its performance mirrors that of having complete knowledge about the exact extent of confounding bias (oracle performance).
 
 
-| Hospitalization  | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | Soft-threshold | Pre-test  |
+| Hospitalization Year=0 | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | Soft-threshold | Pre-test  |
 |-----------|------------|---------|--------|---------|----------|-----------|-------|
-| Year=0         | Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |
-|           | Std Error  | (257)   | (221)  | (160)   | (219)    |           |       |
-|           | Max Regret | 38%     | ∞      |  ∞       | 15%        | 15%       | 68%   |
-|           | Threshold  |         |        |         |          | 0.52      | 1.96  |
+| Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |  2,409  |
+|Std Error  | (257)   | (221)  | (160)   | (219)    |           |       |       |
+|Max Regret | 38%     | ∞      |       |  ∞       | 15%        | 15%       | 68%   |
+| Threshold  |        |         |        |         |          | 0.52      | 1.96  |
 
 
 
