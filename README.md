@@ -17,7 +17,7 @@ Dobkin, Carlos, Amy Finkelstein, Raymond Kluender, and Matthew J. Notowidigdo. 2
 
 In this example, the parameter of interest is the contemporaneous impact of hospitalization on out-of-pocket medical spending (dollar per year). The restricted estimator assumes away a confounding trend, and the robust estimator allows for a linear confounding trend. If there is indeed no confounding trend, the restricted estimator is more precise. However, we can not be sure whether there is no confounding trend or not. Instead, the adaptive estimator pools information across the restricted and and the robust estimates to arrive at a single estimate that balances efficiency and robustness.
 
-This example can be implemented using either the Matlab or R script.  Please note that the script assumes that the `/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
+While the vignette is written in `R`, this example can be implemented using either the `example.m` or `example.R` script.  Please note that the script assumes that the `/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
 	
 ### 1. Load data
 We first load the typical data from robustness checks: the robust and restricted estimates for the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix. Note that the `VUR` is similar to `VR` because this setting is close to the Hausman setting where where `YR` is efficient under the restriction of no confounding bias. 
@@ -26,26 +26,23 @@ YR <- 2409; VR <- 221^2; # the restricted estimator and its squared standard err
 YU <- 2217; VU <- 257^2; # the robust estimator and its squared standard error
 VUR <- 211^2; # the covariance between the restricted and robust esitmators
 ```
-### 2. Calculate the Over-ID Test Statistic, Efficient estimator, and correlation coefficient
+### 2. Calculate the minimal set of ingredients needed for adaptation: over-ID test statistic and the correlation coefficient
 We calculate the over-identification (over-ID) test statistic to be `tO=1.2`:
 ```r
 YO <- YR - YU; VO <- VR - 2*VUR + VU;
 tO <- YO / sqrt(VO);
 ```
-We also calculate the efficient estimate to be `GMM=2379`:
-```r
-GMM <- YU - VUO /VO * YO;
-```
-Finally, we compute the correlation coefficient to be `corr=-0.52`:
+We compute the correlation coefficient to be `corr=-0.52`:
 ```r
 VUO <- (VUR - VU); corr <- VUO/sqrt(VO)/sqrt(VU);
 ```
 
 ### 3. Calculate the Adaptive Estimate based on Interpolation
-Based on the correlation coefficient, we interpolate adaptive estimator `psi.grid.extrap` based on pre-tabulated results in the `/lookup_tables/` directory. We then input `psi.grid.extrap` with the over-ID test statistic `tO`, which returns the adaptive estimate:
+Based on the correlation coefficient, we interpolate adaptive estimator based on pre-tabulated results in the `/lookup_tables/` directory. We then input the wrapper function `calculate_adaptive_estimates()` with the data, which returns the adaptive estimate. The other wrapper function `calculate_max_regret()` returns the "max regret" of various estimators
 ```r
-t_tilde <- psi.grid.extrap(tO) 
-adaptive_nonlinear <- VUO/sqrt(VO) * t_tilde + GMM
+adaptive_estimate_results <- calculate_adaptive_estimates(YR, VR, YU, VU, VUR)
+max_regret_results <- calculate_max_regret(corr)
+
 ```
 The adaptive estimate is `adaptive_nonlinear=2302`. The script also includes codes for approximating the adaptive estimator based on soft-thresholding. The various estimates are summarized in the following table. The metric of "max regret" describes how much worse the mean squared error of the adaptive estimator can be than an oracle estimator that uses prior knowledge of the magnitude of the bias in the restricted estimator $Y_{R}$.  
 
@@ -61,7 +58,10 @@ In contrast, the adaptive estimator provides a sensible summary of $Y_{U}$ and $
 |Max Regret | 38%     | ∞      |       |  ∞       | 15%        | 15%       | 68%   |
 | Threshold  |        |         |        |         |          | 0.52      | 1.96  |
 
-
+Here the GMM estimate is the efficient estimate when `YR` has no confounding bias.  It is calculated as:
+```r
+GMM <- YU - VUO /VO * YO;
+```
 
 ## Matlab scripts
 
