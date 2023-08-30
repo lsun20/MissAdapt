@@ -38,15 +38,14 @@ VUO <- (VUR - VU); corr <- VUO/sqrt(VO)/sqrt(VU);
 ```
 
 ### 3. Calculate the Adaptive Estimate based on Interpolation
-Based on the correlation coefficient, we interpolate adaptive estimator based on pre-tabulated results in the `/lookup_tables/` directory. We then input the wrapper function `calculate_adaptive_estimates()` with the data, which returns the adaptive estimate. The other wrapper function `calculate_max_regret()` returns the "max regret" of various estimators
+Based on the correlation coefficient, we interpolate adaptive estimator based on pre-tabulated results in the `/lookup_tables/` directory. To do that, we just need to input the wrapper function `calculate_adaptive_estimates()` with the data, which returns the adaptive estimate. This function also approximates the adaptive estimator based on soft-thresholding. The other wrapper function `calculate_max_regret()` returns the "max regret" of various estimators. The metric of "max regret" describes how much worse the mean squared error of the adaptive estimator can be than an oracle estimator that uses prior knowledge of the magnitude of the bias in the restricted estimator $Y_{R}$.  
+
 ```r
 adaptive_estimate_results <- calculate_adaptive_estimates(YR, VR, YU, VU, VUR)
 max_regret_results <- calculate_max_regret(corr)
 
 ```
-The adaptive estimate is `adaptive_nonlinear=2302`. The script also includes codes for approximating the adaptive estimator based on soft-thresholding. The various estimates are summarized in the following table. The metric of "max regret" describes how much worse the mean squared error of the adaptive estimator can be than an oracle estimator that uses prior knowledge of the magnitude of the bias in the restricted estimator $Y_{R}$.  
-
-In this context, the high value of the max regret points out that the pre-test estimator, which alternates between using the restricted estimator $Y_{R}$ and robust estimator $Y_{U}$ based on the over-identification statistic, doesn't exhibit an optimal efficiency-robustness tradeoff. In other words, while it may perform well for some values of bias, there exist values of bias at which the pre-test estimator doesn't achieve good efficiency-robustness tradeoff.
+The results returned by these two functions are summarized in the table below. In this context, the high value of the max regret points out that the pre-test estimator, which alternates between using the restricted estimator $Y_{R}$ and robust estimator $Y_{U}$ based on the over-identification statistic, doesn't exhibit an optimal efficiency-robustness tradeoff. In other words, while it may perform well for some values of bias, there exist values of bias at which the pre-test estimator doesn't achieve good efficiency-robustness tradeoff.
 
 In contrast, the adaptive estimator provides a sensible summary of $Y_{U}$ and $Y_{R}$. Its max regret is low, indicating a more favorable efficiency-robustness tradeoff in the estimator's performance. Essentially, when an estimator's max regret is close to zero, its performance mirrors that of having complete knowledge about the exact extent of confounding bias (oracle performance).
 
