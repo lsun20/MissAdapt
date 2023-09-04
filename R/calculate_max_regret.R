@@ -24,10 +24,10 @@ calculate_max_regret <- function(VR, VU, VUR) {
   risk_oracle <- rho_b_over_sigma + 1 / corr^2 - 1
   
   max_regret_YU = max((1/corr^2)/risk_oracle);
-  message('The robust estimator Y_U has worst-case adaptation regret \n', round(max_regret_YU,2), '\n')
+  message('The unrestricted estimator Y_U has max regret \n', round(max_regret_YU,2), '\n')
   
   max_regret_nonlinear <- max(risk_function_adaptive / risk_oracle)
-  message('The adaptive estimator minimizes the worst-case adaptation to be \n', round(max_regret_nonlinear,2), '\n')
+  message('The adaptive estimator minimizes the max regret to be \n', round(max_regret_nonlinear,2), '\n')
   
   # Add soft threshold risk functions
   Eb <- function(l) 1 + l^2 + (b_grid^2 - 1 - l^2) * (pnorm(l - b_grid) - pnorm(-l - b_grid)) + (-b_grid - l) * dnorm(l - b_grid) - (l - b_grid) * dnorm(-l - b_grid)
@@ -42,7 +42,7 @@ calculate_max_regret <- function(VR, VU, VUR) {
   risk_function_st_adaptive <- Eb(st) + 1 / corr^2 - 1
   
   max_regret_st <- max(risk_function_st_adaptive / risk_oracle)
-  message('The adaptive soft-threshold estimator has worst-case adaptation regret\n', round(max_regret_st,2), '\n')
+  message('The adaptive soft-threshold estimator has max regret\n', round(max_regret_st,2), '\n')
   
   # Use simulation to calculate the risk function for the pre-test estimator that switches between Y_U and Y_R
   set.seed(1)
@@ -57,7 +57,7 @@ calculate_max_regret <- function(VR, VU, VUR) {
   
   # Calculate max regret for various estimators
   max_regret_ttest <- max(risk_function_ht_ttest / risk_oracle)
-  message('The pre-test estimator has worst-case adaptation regret\n', round(max_regret_ttest,2), '\n')
+  message('The pre-test estimator has max regret\n', round(max_regret_ttest,2), '\n')
   
   results <- list(
     max_regret_YU = max_regret_YU,
