@@ -1,7 +1,5 @@
 plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
-  # Load libraries
-  library(akima)
-  library(pracma)
+ 
   # Calculate the over-id test statistic
   YO <- YR - YU
   VO <- VR - 2 * VUR + VU
