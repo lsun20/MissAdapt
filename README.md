@@ -74,7 +74,7 @@ plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 
 `/lookup_tables/` contains pre-tabulated solutions to the adaptation problem over a grid of correlation coefficients.
 
-`adaptive_estimate.m` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates via a lookup table.
+`adaptive_estimate.m` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates via a lookup table as well as the max regret.
 
 `const_estimate.m` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates via a lookup table where the worst-case MSE is constrained to be no more than {5%,15%,20%} of $Y_U$.  The default is set to 20%.
 
@@ -85,4 +85,9 @@ plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 ## R scripts
 
 `example.R` : an example script that reads the pre-tabulated solutions and outputs the adaptive estimates via an instantaneous lookup table.
- 
+
+`calculate_adaptive_estimates.R` : a function that takes the input of the pre-tabulated solutions and outputs the adaptive estimates as well as the constrained version via a lookup table.
+
+`calculate_max_regret.R` : a function that takes the input of the pre-tabulated solutions and outputs the max regret of various estimators.
+
+`plot_adaptive_and_minimax_estimates.R` : a function that takes the input of the pre-tabulated solutions and outputs the locus of $B$-minimax estimates via a lookup table.  The oracle MSE function (risk of each $B$-minimax estimator) as well as the risk function of the adaptive estimator are also plotted.
