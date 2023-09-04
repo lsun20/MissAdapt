@@ -1,6 +1,11 @@
 calculate_adaptive_estimates <- function(YR, VR, YU, VU, VUR) {
   
   # Read in the lookup table
+  if(!file.exists("../Matlab/lookup_tables/policy.mat")){stop("Check if ../Matlab/lookup_tables/policy.mat exists")}
+  if(!file.exists("../Matlab/lookup_tables/const_policy.mat")){stop("Check if ../Matlab/lookup_tables/const_policy.mat exists")}
+  if(!file.exists("../Matlab/lookup_tables/thresholds.mat")){stop("Check if ../Matlab/lookup_tables/thresholds.mat exists")}
+  if(!file.exists("../Matlab/lookup_tables/const_thresholds.mat")){stop("Check if ../Matlab/lookup_tables/const_thresholds.mat exists")}
+  
   policy <- readMat("../Matlab/lookup_tables/policy.mat")
   const.policy <- readMat("../Matlab/lookup_tables/const_policy.mat")
   thresholds <- readMat('../Matlab/lookup_tables/thresholds.mat')

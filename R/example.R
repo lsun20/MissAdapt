@@ -9,21 +9,18 @@
 #
 #  Second, this script contains function that calculates the 
 #  worst-case adaptation regret.
-
+#  Make sure the lookup tables are stored in the correct directory: 
+#  "../Matlab/lookup_tables/XXX" because they are needed for the functions
 # PRELIMINARIES =======================================================
 library(R.matlab)
 library(akima) # spline interpolation package
-
-# Read in the lookup table -----------------------------------
-policy <- readMat("../Matlab/lookup_tables/policy.mat")
-const.policy <- readMat("../Matlab/lookup_tables/const_policy.mat")
-thresholds <- readMat('../Matlab/lookup_tables/thresholds.mat')
-const.thresholds <- readMat('../Matlab/lookup_tables/const_thresholds.mat')
+library(xtable)
+ 
 
 # Read in the robust and restrictive estimates and their variance-covariance matrix
 YR <- 2408.8413; VR <- 220.6057^2; # the restricted estimator and its squared standard error
 YU <- 2217.2312; VU <- 257.3961^2; # the robust estimator and its squared standard error
-VUR <- 211.4772^2; # the covariance between the restricted and robust esitmators
+VUR <- 211.4772^2; # the covariance between the restricted and robust estimators
 
 # Load the function for computing 
 source("calculate_adaptive_estimates.R")
@@ -32,9 +29,10 @@ source("calculate_adaptive_estimates.R")
 adaptive_estimate_results <- calculate_adaptive_estimates(YR, VR, YU, VU, VUR)
 
 # Print the results
-print('The over-ID test statistic is based on')
+print('The over-ID test statistic is based on Y_O and its std err')
 adaptive_estimate_results$YO
-print('The efficient estimate (under the restriction of no confounding bias) is')
+tO <- adaptive_estimate_results$YO[1]/adaptive_estimate_results$YO[2]
+print('The efficient estimate (under the restriction of no confounding bias) is and its std err')
 adaptive_estimate_results$GMM
 print('The adaptive estimate is')
 print(adaptive_estimate_results$adaptive_nonlinear)
@@ -42,8 +40,6 @@ print('The adaptive estimate, constrained to increase the worst-case risk by no 
 print(adaptive_estimate_results$adaptive_nonlinear_const)
 print('The adaptive soft-thresholded estimate is')
 print(adaptive_estimate_results$adaptive_st)
-
-tO <- adaptive_estimate_results$YO[1]/adaptive_estimate_results$YO[2]
 
 # Define the values
 row1 <- c(YU, YR, adaptive_estimate_results$YO[1], adaptive_estimate_results$GMM[1], 
@@ -61,7 +57,7 @@ print('The correlation coefficient is')
 corr
 
 source("calculate_max_regret.R")
-max_regret_results <- calculate_max_regret(corr)
+max_regret_results <- calculate_max_regret(VR, VU, VUR) # needs the correlation coefficient only
 
 # Define the values
 row3 <- c(max_regret_results$max_regret_YU-1, Inf, NA,Inf, max_regret_results$max_regret_nonlinear-1, 
@@ -72,7 +68,6 @@ row3 <- c(max_regret_results$max_regret_YU-1, Inf, NA,Inf, max_regret_results$ma
 table_data <- rbind(row1, row2, row3, row4)
 
 # Create a LaTeX table using xtable package
-library(xtable)
 
 colnames(table_data) <- c("YU", "YR", "YO", "GMM", "Adaptive", "Soft-threshold", "Pre-test")
 
