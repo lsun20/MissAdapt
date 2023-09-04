@@ -19,7 +19,7 @@ In this example, the parameter of interest is the contemporaneous impact of hosp
 
 The adaptive estimator pools information across the unrestricted and restricted estimators to arrive at a single estimate that yields a nearly optimal balance between precision and worst case bias. By "nearly optimal" we mean that the adaptive estimator achieves a worst case mean squared error (MSE) as close as possible to that of an *oracle* who knows the magnitude (but not the sign) of the bias faced by the restricted estimator. We call the excess worst case MSE of the adaptive estimator over the oracle the *adaptation regret*. A small adaptation regret indicates a nearly optimal balance is being struck between precision and robustness. As discussed in the paper -- and illustrated below -- the adaptive estimator will always exhibit lower adaptation regret than than selecting a model based upon a pre-test, with especially large differences resulting when such tests exhibit low power.
 
-While the vignette is written in `R`, this example can be implemented using either the `example.m` or `example.R` script.  Please note that the script assumes that the `/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
+While the vignette is written in `R`, this example can be implemented using either the `example.m` or `example.R` script.  Please note that the script assumes that the `MATLAB/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
 	
 ### 1. Load data
 We first load the typical data from robustness checks: the unrestricted and restricted estimates for the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix. Note that the `VUR` is similar to `VR` because this setting is close to the Hausman setting where where `YR` is efficient under the restriction of no confounding bias. 
@@ -63,6 +63,12 @@ Here the GMM estimate is the efficient estimate when `YR` is unbiased (i.e., whe
 ```
 GMM <- YU - VUO /VO * YO;
 ```
+### 4. Plot the Locus of the Minimax Estimates 
+The oracle performance mentioned in the previous section is based on a locus of minimax estimates, each of which minimizes the worst case risk under a given upper bound on the magnitude of the bias.  The final wrapper function `plot_adaptive_and_minimax_estimates()` returns these estimates and summarize them in a plot.   
+```r
+plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)  
+```
+![Locus of Minimax Estimates](./R/minimax_locus_sigmatb_0.52_B9.png)
 
 ## Matlab scripts
 
