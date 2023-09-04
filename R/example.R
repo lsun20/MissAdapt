@@ -4,14 +4,19 @@
 #  This script contains functions to calculate the adaptive estimators
 #  described in Armstrong, Kline and Sun (2023) for scalar parameters.
 #
-#  First, this script contains function that are used to construct the
+#  First, this script calls function that are used to construct the
 #  adaptive estimator given the input of robust and restricted estimators.
 #
-#  Second, this script contains function that calculates the 
+#  Second, this script calls function that calculates the 
 #  worst-case adaptation regret.
+#
+#  Second, this script calls function that plots the locus of B-minimax estimates
+#  and the associated risk functions.
 #  Make sure the lookup tables are stored in the correct directory: 
 #  "../Matlab/lookup_tables/XXX" because they are needed for the functions
 # PRELIMINARIES =======================================================
+
+rm(list=ls())
 library(R.matlab)
 library(akima) # spline interpolation package
 library(xtable)
@@ -77,4 +82,7 @@ latex_table <- xtable(table_data, caption = "Summary for Robustness Checks")
 # Print the LaTeX table
 print(latex_table, include.rownames = FALSE, hline.after = c(-1, 0, nrow(table_data)))
 
+# Make the locus plot
+source("plot_adaptive_and_minimax_estimates.R")
+plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 
