@@ -86,21 +86,23 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   png(figurename)
   # Create the plot area
   par(mar = c(5, 5, 4, 5))  # Adjust margins as needed
-  plot(B_grid_scale, Y_minimax, type = "n", xlab = "B/√Σ_O", xaxt = "n", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
-  axis(1, at = c(0, 1, 2, 3), labels = c("0", "1", "4", "9"))
+  plot(B_grid_scale, Y_minimax, type = "n", las = 1, 
+       xlab = "B/√Σ_O", xaxt = "n", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
+   
+  axis(1, at = c(0, 1, 2, 3), labels = c("0", "1", "4", "9"),las=1)
   # Add triangles at specified coordinates
   points(B_grid_scale, Y_minimax, pch = 2, col = "black", cex = 1)
   
-  abline(h=YR, col = "black", pch = 2); text(x=0, y=YR*1.005, 'YR', adj = 0)
-  abline(h=GMM, col = "black", pch = 4); text(x=0, y=GMM*1.005, 'GMM', adj = 0)
-  abline(h=adaptive_nonlinear, col ="black", pch = 3); text(x=0, y=adaptive_nonlinear*1.005, 'Adaptive', adj = 0)
-  abline(h=YU, col = "black", pch = 1); text(x=0, y=YU*1.005, 'YU', adj = 0)
+  abline(h=YR, col = "black", pch = 2); text(x=0, y=YR*1.0025, 'YR', adj = 0)
+  abline(h=GMM, col = "black", pch = 4); text(x=0, y=GMM*1.0025, 'GMM', adj = 0)
+  abline(h=adaptive_nonlinear, col ="black", pch = 3); text(x=0, y=adaptive_nonlinear*1.0025, 'Adaptive', adj = 0)
+  abline(h=YU, col = "black", pch = 1); text(x=0, y=YU*1.0025, 'YU', adj = 0)
   
   par(new = TRUE) 
   plot(B_grid_scale, risk_oracle, type = "n", xlab = "", ylab = "",
        axes = FALSE,ylim = c(min(risk_function_adaptive) - 0.2, max(risk_function_adaptive) + 0.2))
-  axis(4, at = pretty(range(risk_oracle,risk_function_adaptive)), col.axis = "blue", las = 1, cex.axis = 0.7)
-  mtext('Test', side=4, line=2 )
+  axis(4, at = pretty(range(risk_oracle,risk_function_adaptive)), col.axis = "blue", las = 1)
+  mtext('Mean squared error relative to YU', side=4, line=3 )
   
   points(B_grid_scale, risk_oracle, type = "l", col = "blue")
   points(B_grid_scale, risk_function_adaptive, type = "l", col = "blue", lty = 3 )
