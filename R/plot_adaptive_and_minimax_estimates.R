@@ -83,10 +83,10 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
  
   # Save the figure
   figurename <- paste("minimax_locus_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
-  png(figurename)
+  png(figurename, width = 640, height = 420, units = "px")
   # Create the plot area
-  par(mar = c(5, 5, 4, 5))  # Adjust margins as needed
-  plot(B_grid_scale, Y_minimax, type = "n", las = 1, 
+  par(mar = c(5, 5, 4, 5), pty = 'm')  # Adjust margins as needed
+  plot(B_grid_scale, Y_minimax, type = "n", las = 1,  
        xlab = "B/√Σ_O", xaxt = "n", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
    
   axis(1, at = c(0, 1, 2, 3), labels = c("0", "1", "4", "9"),las=1)
@@ -99,7 +99,7 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   abline(h=YU, col = "black", pch = 1); text(x=0, y=YU*1.0025, 'YU', adj = 0)
   
   par(new = TRUE) 
-  plot(B_grid_scale, risk_oracle, type = "n", xlab = "", ylab = "",
+  plot(B_grid_scale, risk_oracle, type = "n", xlab = "", ylab = "", 
        axes = FALSE,ylim = c(min(risk_function_adaptive) - 0.2, max(risk_function_adaptive) + 0.2))
   axis(4, at = pretty(range(risk_oracle,risk_function_adaptive)), col.axis = "blue", las = 1)
   mtext('Mean squared error relative to YU', side=4, line=3 )
