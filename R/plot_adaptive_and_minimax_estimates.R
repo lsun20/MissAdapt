@@ -85,7 +85,7 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   figurename <- paste("minimax_locus_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
   png(figurename, width = 640, height = 420, units = "px")
   # Create the plot area
-  par(mar = c(5, 5, 4, 5), pty = 'm')  # Adjust margins as needed
+  par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
   plot(B_grid_scale, Y_minimax, type = "n", las = 1,  
        xlab = "B/√Σ_O", xaxt = "n", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
    
@@ -102,14 +102,15 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   plot(B_grid_scale, risk_oracle, type = "n", xlab = "", ylab = "", 
        axes = FALSE,ylim = c(min(risk_function_adaptive) - 0.2, max(risk_function_adaptive) + 0.2))
   axis(4, at = pretty(range(risk_oracle,risk_function_adaptive)), col.axis = "blue", las = 1)
-  mtext('Mean squared error relative to YU', side=4, line=3 )
+  mtext('Mean squared error relative to YU', side=4, line=3,cex=1.2)
   
-  points(B_grid_scale, risk_oracle, type = "l", col = "blue")
-  points(B_grid_scale, risk_function_adaptive, type = "l", col = "blue", lty = 3 )
+  points(B_grid_scale, risk_oracle, type = "l", col = "blue", lwd = 2)
+  points(B_grid_scale, risk_function_adaptive, type = "l", col = "blue", lty = 3, lwd = 2 )
   abline(h=1,lty=2 )
   
   par(new = FALSE)
-  legend("topright", legend = c("B-minimax estimates", "Oracle risk", "Adaptive risk"), col = c("black", "blue", "blue"), pch = c(2, NA, NA), lty = c(NA,  1, 3), cex = 0.8, bty = "n")
+  legend("topright", legend = c("B-minimax estimates", "Oracle risk", "Adaptive risk"), 
+         col = c("black", "blue", "blue"), pch = c(2, NA, NA), lty = c(NA,  1, 3), lwd = c(1,2,2),bty = "n")
  
   dev.off()
   message("Figure saved successfully as ",figurename)
