@@ -45,13 +45,61 @@ The results returned by these two functions are summarized in the table below. I
 
 In contrast, the adaptive estimator provides exhibits a max regret of only 15%, indicating near oracle performance. That is, the adaptive estimator exposes the researcher to worst case MSE only 15% greater than what they would face if the magnitude of any confounding trend were known ex-ante.
 
+<div align="center">
+  <table>
+    <tr>
+      <th>Hospitalization Year=0</th>
+      <th>$Y_{U}$</th>
+      <th>$Y_{R}$</th>
+      <th>$Y_O$</th>
+      <th>GMM</th>
+      <th>Adaptive</th>
+      <th>Soft-threshold</th>
+      <th>Pre-test</th>
+    </tr>
+    <tr>
+      <td>Estimate</td>
+      <td>2,217</td>
+      <td>2,409</td>
+      <td>192</td>
+      <td>2,379</td>
+      <td>2,302</td>
+      <td>2,287</td>
+      <td>2,409</td>
+    </tr>
+    <tr>
+      <td>Std Error</td>
+      <td>(257)</td>
+      <td>(221)</td>
+      <td>(160)</td>
+      <td>(219)</td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Max Regret</td>
+      <td>38%</td>
+      <td>∞</td>
+      <td></td>
+      <td>∞</td>
+      <td>15%</td>
+      <td>15%</td>
+      <td>68%</td>
+    </tr>
+    <tr>
+      <td>Threshold</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>0.52</td>
+      <td>1.96</td>
+    </tr>
+  </table>
+</div>
 
-| Hospitalization Year=0 | $Y_{U}$    | $Y_{R}$ | $Y_O$  |   GMM   | Adaptive | Soft-threshold | Pre-test  |
-|-----------|------------|---------|--------|---------|----------|-----------|-------|
-| Estimate   | 2,217   | 2,409  | 192     | 2,379    | 2,302     | 2,287 |  2,409  |
-|Std Error  | (257)   | (221)  | (160)   | (219)    |           |       |       |
-|Max Regret | 38%     | ∞      |       |  ∞       | 15%        | 15%       | 68%   |
-| Threshold  |        |         |        |         |          | 0.52      | 1.96  |
 
 The GMM estimate is efficient when `YR` is unbiased (i.e., when no trend is present).  It is calculated as:
 ```r
@@ -64,7 +112,9 @@ The wrapper function `plot_adaptive_and_minimax_estimates()` returns the $B$-min
 ```r
 plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)  
 ```
-![Locus of Minimax Estimates](./R/minimax_locus_sigmatb_0.52_B9.png)
+<p align="center">
+  <img src="./R/minimax_locus_sigmatb_0.52_B9.png" alt="Locus of Minimax Estimates">
+</p>
 
 From this plot, we see that as $B$ increases, the $B$-minimax estimator asymptotes towards $Y_U$. The worst case risk is shown on the second y-axis where, for convenience, the MSE of $Y_U$ has been normalized to one. In this case, if the bias were known to the be zero, the GMM estimator would yield worst case risk nearly 30\% below $Y_U$. The adaptive estimator's worst case risk exceeds the oracle's worst case risk at all bias magnitudes, which is the price the researcher must pay for not knowing the bound $B$ ahead of time. However, the adaptive estimator's worst case risk comes as close to the oracle's worst case risk across all bias magnitudes as possible. See Section 3 of ["Armstrong, Kline, Sun (2023)"](https://arxiv.org/pdf/2305.14265.pdf) for further discussion.
 
