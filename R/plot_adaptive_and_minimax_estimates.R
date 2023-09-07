@@ -87,9 +87,11 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   # Create the plot area
   par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
   plot(B_grid_scale, Y_minimax, type = "n", las = 1,  
-       xlab = "B/√Σ_O", xaxt = "n", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
+       xaxt = "n", xlab = "", ylab = "Estimate", ylim = c(min(YU, YR) * 0.99, max(YU, YR) * 1.01))
    
   axis(1, at = c(0, 1, 2, 3), labels = c("0", "1", "4", "9"),las=1)
+  title( xlab = "B/√Σ_O", line=2)
+  
   # Add triangles at specified coordinates
   points(B_grid_scale, Y_minimax, pch = 2, col = "black", cex = 1)
   
@@ -108,8 +110,8 @@ plot_adaptive_and_minimax_estimates <- function(YR, YU, VR, VU, VUR) {
   points(B_grid_scale, risk_function_adaptive, type = "l", col = "blue", lty = 3, lwd = 2 )
   abline(h=1,lty=2 )
   
-  par(new = FALSE)
-  legend("topright", legend = c("B-minimax estimates", "Oracle risk", "Adaptive risk"), 
+  par(new = FALSE,xpd=TRUE)
+  legend("bottom", inset=c(-0.2,-0.3),horiz=TRUE,legend = c("B-minimax estimates", "Oracle risk", "Adaptive risk"), 
          col = c("black", "blue", "blue"), pch = c(2, NA, NA), lty = c(NA,  1, 3), lwd = c(1,2,2),bty = "n")
  
   dev.off()
