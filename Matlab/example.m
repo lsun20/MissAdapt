@@ -2,9 +2,10 @@
 % and the correlation between the restricted and unrestricted estimators. 
  
 
-YR = [33.52740]; VR = [1.811236^2];
-YU = [52.94609]; VU = [ 2.539776^2];
-VUR = [1.811236^2];
+YR = [2408.8413]; VR = [220.6057^2];
+YU = [2217.2312]; VU = [257.3961^2];
+VUR = [211.4772^2];
+
 YO = YR - YU;
 VO = VR - 2*VUR + VU;
 VUO = (VUR - VU);
