@@ -1,6 +1,6 @@
 # DESCRIPTION =========================================================
 #
-# This script contains functions to calculate adaptive estimators as 
+# This script calculates adaptive estimators as 
 # described in Armstrong, Kline, and Sun (2023) for scalar parameters. 
 # The Vignette offers a detailed step-by-step guide for this script. 
 # We encourage you to explore it. If you encounter any issues, please 
