@@ -1,9 +1,9 @@
 # MissAdapt
 
 ## Introduction
-This repository contains the code and documentation to replicate the example usage in Section 3 of ["Adapting to Misspecification"](https://arxiv.org/pdf/2305.14265.pdf) by Armstrong, Kline, and Sun (2023). In addition to the paper, the example included here is also explained in the beginning of the presentation at the Chamberlain online seminar, recorded [here](https://youtu.be/JrDsCW-1h6A).  
+This repository contains the code and documentation to replicate the example usage in Section 3 of "Adapting to Misspecification" by [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf). In addition to the paper, the example included here is also explained in the beginning of the presentation at the Chamberlain online seminar, recorded [here](https://youtu.be/JrDsCW-1h6A).  
 
-You can find the MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants proposed in the paper.  All Matlab code are included in the folder `Matlab/`.  All R code are included in the folder `R/`.  
+You can find the MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants proposed in the paper. Matlab code is provided in the folder `/Matlab/`. R code is provided in the folder `/R/`. 
 
 ## A vignette for example usage
 Here we provide an example usage of the adaptive estimator to results from the paper:  
@@ -119,7 +119,7 @@ plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 From this plot, we see that as $B$ increases, the $B$-minimax estimator asymptotes towards $Y_U$. The worst case risk is shown on the second y-axis where, for convenience, the MSE of $Y_U$ has been normalized to one. In this case, if the bias were known to the be zero, the GMM estimator would yield worst case risk nearly 30\% below $Y_U$. The adaptive estimator's worst case risk exceeds the oracle's worst case risk at all bias magnitudes, which is the price the researcher must pay for not knowing the bound $B$ ahead of time. However, the adaptive estimator's worst case risk comes as close to the oracle's worst case risk across all bias magnitudes as possible. See Section 3 of ["Armstrong, Kline, Sun (2023)"](https://arxiv.org/pdf/2305.14265.pdf) for further discussion.
 
 
-## Matlab scripts
+## `/Matlab/` contains
 
 `/lookup_tables/` contains pre-tabulated solutions to the adaptation problem over a grid of correlation coefficients.
 
@@ -131,7 +131,7 @@ From this plot, we see that as $B$ increases, the $B$-minimax estimator asymptot
 
 `example.m` : an example script that calls `adaptive_estimate.m` and `const_estimate.m` and outputs the adaptive results in a formatted csv file; it also calls `minimax_locus_plot.m` and outputs the $B$-minimax locus plot along with risk functions.
 
-## R scripts
+## `/R/` contains
 
 `example.R` : an example script that reads the pre-tabulated solutions and outputs the adaptive estimates via an instantaneous lookup table.
 
