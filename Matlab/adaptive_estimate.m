@@ -129,9 +129,11 @@ end
             results(1,1)=YU; results(2,1)=sqrt(VU); % report Y_U
             results(3,1)=VU/V_CUE; 
             results(1,2)=YR; results(2,2)=sqrt(VR); % report Y_R
+            results(3,2)=Inf; 
             results(1,3)=YO; results(2,3)=sqrt(VO); % report Y_O
             results(1,4)=CUE; results(2,4)=sqrt(V_CUE); % report GMM
-           
+            results(3,4)=Inf; 
+
             results(1,5)=adaptive_nonlinear; results(3,5)=penalty_nonlinear; 
             results(1,6)=adaptive_st; results(3,6)=max(risk_function_st_adaptive./risk_oracle); 
             results(4,6)=st; 
