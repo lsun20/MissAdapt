@@ -125,7 +125,7 @@ end
             disp('The pre-test has worst-case adaptation regret')
             disp(max(risk_function_ht_ttest./risk_oracle))
             %% put everything in a matrix
-            results = zeros(4,7); 
+            results = nan(4,7); 
             results(1,1)=YU; results(2,1)=sqrt(VU); % report Y_U
             results(3,1)=VU/V_CUE; 
             results(1,2)=YR; results(2,2)=sqrt(VR); % report Y_R
@@ -206,7 +206,7 @@ end
             % overwrite the pre-tabulated penalty term
             Tbl(8,1) = max(risk_function_ht_ttest./risk_oracle);
             %% put everything in a matrix
-            results = zeros(4,7);  
+            results = nan(4,7);  
             results(1,1)=YU; results(2,1)=sqrt(VU); % report Y_U
             results(3,1)=VU/V_CUE; 
             results(1,2)=YR; results(2,2)=sqrt(VR); % report Y_R

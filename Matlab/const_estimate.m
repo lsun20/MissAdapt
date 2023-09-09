@@ -109,7 +109,7 @@ rho_tbl = readmatrix('lookup_tables/minimax_rho_B9.csv');
             disp('The adaptive soft-threshold has worst case risk')
             max_risk_st_adaptive = corr_str^2*max(risk_function_st_adaptive)
             %% put everything in a matrix
-            results = zeros(4,2); 
+            results = nan(4,2); 
             results(1,1)=adaptive_nonlinear; results(2,1)=penalty_nonlinear;
             results(3,1)=max_risk_adaptive ;
             results(1,2)=adaptive_st; results(2,2)=max(risk_function_st_adaptive./risk_oracle); 
@@ -180,7 +180,7 @@ rho_tbl = readmatrix('lookup_tables/minimax_rho_B9.csv');
             disp(max(corr_sq*Eb(st)+1-corr_sq))
  
             %% put everything in a matrix
-            results = zeros(5,2); 
+            results = nan(5,2); 
             results(1,1)=adaptive_nonlinear; results(2,1)=penalty_nonlinear;
             results(4,1)=SURE; results(5,1)=corr_sq*max(risk_function_adaptive);
             results(1,2)=adaptive_st; results(2,2)=penalty_st; results(3,2)=st;
