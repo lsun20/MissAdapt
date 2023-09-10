@@ -1,7 +1,7 @@
 # MissAdapt
 
 ## Introduction
-This repository contains the code and documentation to replicate the example usage in Section 3 of "Adapting to Misspecification" by [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf). In addition to the paper, the example included here is also explained in the beginning of the presentation at the Chamberlain online seminar, recorded [here](https://youtu.be/JrDsCW-1h6A).  
+This repository provides code that replicates Figure 1 and key results from Tables 1 and 2 of [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf). In addition to the paper, the example included here is also explained in the beginning of the presentation at the Chamberlain online seminar, recorded [here](https://youtu.be/JrDsCW-1h6A).  
 
 You can find the MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants proposed in the paper. Matlab code is provided in the folder `/Matlab/`. R code is provided in the folder `/R/`. 
 
