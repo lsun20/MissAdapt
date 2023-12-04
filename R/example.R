@@ -33,7 +33,9 @@ library(R.matlab)
 library(akima) # spline interpolation package
 library(pracma) # meshgrid function
 library(xtable)
- 
+library(ggplot2)
+library(tidyverse)
+
 # LOAD DATA FROM THE APPLICATION AS IN VIGNETTE PART 1 ================
 # Read in the robust and restrictive estimates and their variance-covariance matrix
 YR <- 2408.8413; VR <- 220.6057^2; # the restricted estimator and its squared standard error
@@ -107,3 +109,7 @@ print(latex_table, include.rownames = FALSE, hline.after = c(-1, 0,
 source("plot_adaptive_and_minimax_estimates.R")
 plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 
+# PLOT THE FIGURE OF LEAST FAV. PRIORS ASSOCIATED WITH MINIMAX ESTIMATES
+# =====================================================================
+source("plot_adaptive_and_minimax_priors.R")
+plot_adaptive_and_minimax_priors(YR, YU, VR, VU, VUR)
