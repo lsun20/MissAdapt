@@ -113,3 +113,9 @@ plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 # =====================================================================
 source("plot_adaptive_and_minimax_priors.R")
 plot_adaptive_and_minimax_priors(YR, YU, VR, VU, VUR)
+
+
+# PLOT THE FIGURE OF FIXED LENGTH CI FOR ADAPTIVE ESTIMATES
+# =====================================================================
+source("plot_adaptive_flci.R")
+plot_adaptive_flci(YR, YU, VR, VU, VUR)
