@@ -5,3 +5,6 @@
 
 # Session Data files
 *.RData
+
+# Plots
+/R/*.png
