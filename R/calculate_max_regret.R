@@ -7,6 +7,8 @@ calculate_max_regret <- function(VR, VU, VUR) {
   # Interpolate the risk function for the adaptive estimator
   if(!file.exists("../Matlab/lookup_tables/risk.mat")){stop("Check if ../Matlab/lookup_tables/risk.mat exists")}
   risk <-  readMat("../Matlab/lookup_tables/risk.mat")
+  mse <- readMat('../Matlab/lookup_tables/emse_corr.mat')
+  
   b_grid <- risk$b.grid; risk_mat<- risk$risk.mat;
   Kb <- length(b_grid)
   risk_function_adaptive <- numeric(Kb)
@@ -44,6 +46,7 @@ calculate_max_regret <- function(VR, VU, VUR) {
   max_regret_st <- max(risk_function_st_adaptive / risk_oracle)
   message('The adaptive soft-threshold estimator has max regret\n', round(max_regret_st,2), '\n')
   
+ 
   # Use simulation to calculate the risk function for the pre-test estimator that switches between Y_U and Y_R
   set.seed(1)
   sims <- 100000
@@ -54,16 +57,29 @@ calculate_max_regret <- function(VR, VU, VUR) {
                                     + (x_b < -l) * x_b - matrix(b_grid, sims, Kb, byrow = TRUE))^2) / sims
   
   risk_function_ht_ttest <- (Ebsims_ht(1.96) + 1 / corr^2 - 1)
-  
+                         
   # Calculate max regret for various estimators
   max_regret_ttest <- max(risk_function_ht_ttest / risk_oracle)
   message('The pre-test estimator has max regret\n', round(max_regret_ttest,2), '\n')
+  # Calculate the adaptive ERM lambda
+  lambda.function <-  splinefun(Sigma_UO_grid, mse$MSE.lambda.mat, method = "fmm", ties = mean)
+  lambda <- lambda.function(abs(corr))
+  
+  Ebsims_MSE = function(l)  colSums((x_b^3 / (x_b^2 + l) - matrix(b_grid, sims, Kb, byrow = TRUE))^2) / sims
+  # Calculate max regret for various estimators
+  max_regret_erm <- max(( Ebsims_MSE(1) + 1 / corr^2 - 1) / risk_oracle)
+  max_regret_adaptive_erm <- max(( Ebsims_MSE(lambda) + 1 / corr^2 - 1) / risk_oracle)
   
   results <- list(
     max_regret_YU = max_regret_YU,
     max_regret_nonlinear = max_regret_nonlinear,
     max_regret_st = max_regret_st,
-    max_regret_ttest = max_regret_ttest
+    st = st,
+    max_regret_ttest = max_regret_ttest,
+    max_regret_erm = max_regret_erm,
+    max_regret_adaptive_erm = max_regret_adaptive_erm,
+
+    lambda = lambda
   )
   
   return(results)
