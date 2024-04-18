@@ -81,7 +81,12 @@ calculate_max_regret <- function(VR, VU, VUR) {
     max_regret_erm = max_regret_erm,
     max_regret_adaptive_erm = max_regret_adaptive_erm,
 
-    lambda = lambda
+    lambda = lambda,
+    max_risk_adaptive = max(risk_function_adaptive),
+    max_risk_st_adaptive = max(risk_function_st_adaptive),
+    max_risk_ht_ttest = max(risk_function_ht_ttest),
+    max_risk_erm = max(risk_function_erm),
+    max_risk_adaptive_erm = max(risk_function_adaptive_erm)
   )
   
   return(results)
