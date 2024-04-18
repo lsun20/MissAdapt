@@ -14,8 +14,8 @@ calculate_max_regret <- function(VR, VU, VUR) {
   risk_function_adaptive <- numeric(Kb)
   
   for (i in 1:Kb) {
-    psi.const.function <- splinefun(Sigma_UO_grid, risk_mat[i,], method = "fmm", ties = mean)
-    risk_function_adaptive[i] <- psi.const.function(abs(corr))
+    risk.spline.function <- splinefun(Sigma_UO_grid, risk_mat[i,], method = "fmm", ties = mean)
+    risk_function_adaptive[i] <- corr^2 * risk.spline.function(abs(corr))
   }
   
   # Calculate the oracle risk function
@@ -23,9 +23,9 @@ calculate_max_regret <- function(VR, VU, VUR) {
   rho_tbl <- read.csv('../Matlab/lookup_tables/minimax_rho_B9.csv', header = FALSE)
   rho_b_over_sigma_function<- splinefun(rho_tbl[,1], rho_tbl[,2], method = "fmm", ties = mean)
   rho_b_over_sigma <- rho_b_over_sigma_function(abs(b_grid))
-  risk_oracle <- rho_b_over_sigma + 1 / corr^2 - 1
+  risk_oracle <- corr^2 * rho_b_over_sigma + 1 - corr^2
   
-  max_regret_YU = max((1/corr^2)/risk_oracle);
+  max_regret_YU = max(1/risk_oracle);
   message('The unrestricted estimator Y_U has max regret \n', round(max_regret_YU,2), '\n')
   
   max_regret_nonlinear <- max(risk_function_adaptive / risk_oracle)
@@ -41,7 +41,7 @@ calculate_max_regret <- function(VR, VU, VUR) {
   st <- st.function(abs(corr))
   #message('The adaptive soft threshold is \n', round(st round(, '\n')
   
-  risk_function_st_adaptive <- Eb(st) + 1 / corr^2 - 1
+  risk_function_st_adaptive <- corr^2 * Eb(st) + 1 - corr^2 
   
   max_regret_st <- max(risk_function_st_adaptive / risk_oracle)
   message('The adaptive soft-threshold estimator has max regret\n', round(max_regret_st,2), '\n')
@@ -56,7 +56,7 @@ calculate_max_regret <- function(VR, VU, VUR) {
   Ebsims_ht <- function(l) colSums(((x_b > l) * x_b + (x_b < l & x_b > -l) * (1 + VO / VUO) * x_b
                                     + (x_b < -l) * x_b - matrix(b_grid, sims, Kb, byrow = TRUE))^2) / sims
   
-  risk_function_ht_ttest <- (Ebsims_ht(1.96) + 1 / corr^2 - 1)
+  risk_function_ht_ttest <- corr^2 * Ebsims_ht(1.96) + 1 - corr^2
                          
   # Calculate max regret for various estimators
   max_regret_ttest <- max(risk_function_ht_ttest / risk_oracle)
@@ -67,8 +67,10 @@ calculate_max_regret <- function(VR, VU, VUR) {
   
   Ebsims_MSE = function(l)  colSums((x_b^3 / (x_b^2 + l) - matrix(b_grid, sims, Kb, byrow = TRUE))^2) / sims
   # Calculate max regret for various estimators
-  max_regret_erm <- max(( Ebsims_MSE(1) + 1 / corr^2 - 1) / risk_oracle)
-  max_regret_adaptive_erm <- max(( Ebsims_MSE(lambda) + 1 / corr^2 - 1) / risk_oracle)
+  risk_function_erm <- corr^2 * Ebsims_MSE(1) + 1 - corr^2 
+  risk_function_adaptive_erm <- corr^2 * Ebsims_MSE(lambda) + 1 - corr^2 
+  max_regret_erm <- max(risk_function_erm / risk_oracle)
+  max_regret_adaptive_erm <- max(risk_function_adaptive_erm / risk_oracle)
   
   results <- list(
     max_regret_YU = max_regret_YU,
