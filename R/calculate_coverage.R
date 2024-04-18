@@ -1,4 +1,4 @@
-calculate_coverage <- function(YR, VR, YU, VU, VUR) {
+calculate_coverage <- function(YR, VR, YU, VU, VUR, B) {
   
   # Read in the lookup table
   if(!file.exists("../Matlab/lookup_tables/policy.mat")){stop("Check if ../Matlab/lookup_tables/policy.mat exists")}
@@ -27,8 +27,14 @@ calculate_coverage <- function(YR, VR, YU, VU, VUR) {
   psi.grid.extrap <- splinefun(policy$y.grid, psi.grid, method = "natural")
   # Interpolate the critical values for the adaptive estimator
   flci_adaptive_cv <-  readMat("../Matlab/lookup_tables/flci_adaptive_cv.mat")
+  if (B == 0) {
+    B_index <- 1
+  } else {
+    B_index <- which(flci_adaptive_cv$B.grid == B)
+  }
+  
   Sigma_UO_grid <- tanh(seq(-3, -0.05, 0.05))
-  flci_c_function <-  splinefun(Sigma_UO_grid, flci_adaptive_cv$min.c.vec[1,], method = "fmm", ties = mean)#under B=0
+  flci_c_function <-  splinefun(Sigma_UO_grid, flci_adaptive_cv$min.c.vec[B_index,], method = "fmm", ties = mean)#under B=0
   flci_c <- flci_c_function(corr)
   
   risk <-  readMat("../Matlab/lookup_tables/risk.mat")
@@ -52,22 +58,22 @@ calculate_coverage <- function(YR, VR, YU, VU, VUR) {
   }
   
   rejection <- colMeans(stat > 1.96)
-  # max_cov_sigmaU <- 1 - min(rejection)
-  # min_cov_sigmaU <- 1 - max(rejection)
-  max_cov_sigmaU <- 1 - max(rejection[abs(b_grid)<=1])
-  min_cov_sigmaU <- 1 - max(rejection[abs(b_grid)<=2])
+  max_cov_sigmaU <- 1 - min(rejection)
+  min_cov_sigmaU <- 1 - max(rejection)
+  # max_cov_sigmaU <- 1 - max(rejection[abs(b_grid)<=1])
+  # min_cov_sigmaU <- 1 - max(rejection[abs(b_grid)<=2])
   
   rejection <- colMeans(stat > flci_c)
-  # max_cov_flci <- 1 - min(rejection)
-  # min_cov_flci <- 1 - max(rejection)
-  max_cov_flci <- 1 - min(rejection[abs(b_grid)<=1])
-  min_cov_flci <- 1 - max(rejection[abs(b_grid)<=2])
+  max_cov_flci <- 1 - min(rejection)
+  min_cov_flci <- 1 - max(rejection)
+  # max_cov_flci <- 1 - min(rejection[abs(b_grid)<=1])
+  # min_cov_flci <- 1 - max(rejection[abs(b_grid)<=2])
   
   rejection <- colMeans(YRtest > (1.96*sqrt(VR/VU)))
-  # max_cov_YR  <- 1 - min(rejection)
-  # min_cov_YR  <- 1 - max(rejection)
-  max_cov_YR  <- 1 - min(rejection[abs(b_grid)<=1])
-  min_cov_YR  <- 1 - max(rejection[abs(b_grid)<=2])
+  max_cov_YR  <- 1 - min(rejection)
+  min_cov_YR  <- 1 - max(rejection)
+  # max_cov_YR  <- 1 - min(rejection[abs(b_grid)<=1])
+  # min_cov_YR  <- 1 - max(rejection[abs(b_grid)<=2])
   
   results <- list(
     adaptive_sigmaU = c(min_cov_sigmaU, max_cov_sigmaU),
