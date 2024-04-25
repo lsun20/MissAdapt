@@ -10,7 +10,7 @@ calculate_adaptive_estimates <- function(YR, VR, YU, VU, VUR) {
   const.policy <- readMat("../Matlab/lookup_tables/const_policy.mat")
   thresholds <- readMat('../Matlab/lookup_tables/thresholds.mat')
   const.thresholds <- readMat('../Matlab/lookup_tables/const_thresholds.mat')
-  
+  mse <- readMat('../Matlab/lookup_tables/emse_corr.mat')
   # Calculate the over-id test statistic
   YO <- YR - YU
   VO <- VR - 2 * VUR + VU
@@ -48,13 +48,20 @@ calculate_adaptive_estimates <- function(YR, VR, YU, VU, VUR) {
   st <- st.function(abs(corr))
   adaptive_st <- VUO / sqrt(VO) * ((tO > st) * (tO - st) + (tO < -st) * (tO + st)) + GMM
   
+  # Calculate the ERM estimate as well as the adaptive
+  erm <- VUO / sqrt(VO) * tO * (tO^2/(tO^2+1)) + GMM
+  lambda.function <-  splinefun(Sigma_UO_grid, mse$MSE.lambda.mat, method = "fmm", ties = mean)
+  lambda <- lambda.function(abs(corr))
+  adaptive_erm <- VUO / sqrt(VO) * tO * (tO^2/(tO^2+lambda)) + GMM
   results <- list(
     st = st,
     GMM = c(GMM, sqrt(V_GMM)),
     YO = c(YO, sqrt(VO)),
     adaptive_nonlinear = adaptive_nonlinear,
     adaptive_nonlinear_const = adaptive_nonlinear_const,
-    adaptive_st = adaptive_st
+    adaptive_st = adaptive_st,
+    erm = erm,
+    adaptive_erm = adaptive_erm
   )
   
   return(results)
