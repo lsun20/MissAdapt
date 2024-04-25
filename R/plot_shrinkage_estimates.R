@@ -102,7 +102,55 @@ plot_shrinkage_estimates <- function(YR, YU, VR, VU, VUR) {
     guides(color = guide_legend(ncol = 3))  # Adjust the number of columns in the legend
   print(plot)
   ggsave(filename = figurename,
-         plot, width = 15, height = 10, units = "cm")
+         plot, width = 10, height = 10, units = "cm")
   dev.off()
   message("Figure saved successfully as ",figurename)
+  
+  figurename <- paste("weight_plot_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
+  
+  df <- data.frame(
+    y_grid_scale,a_w=a/y_grid_scale,b_w=b/y_grid_scale,c_w=c/y_grid_scale,d_w=d/y_grid_scale
+  )
+  df  <- filter(df, y_grid_scale != 0)
+  df_long <- tidyr::gather(df, key = "series", value = "y", -y_grid_scale)
+  
+  shrinkage_linetypes <- c('dashed', 'blank', 'solid' ,'dotdash')
+  plot <- ggplot(filter(df_long, series != "b_w"), aes(x = y_grid_scale, y = y, linetype = series, color = series)) +
+    geom_line(size = 1) +
+    geom_point(data = filter(df_long, series == "b_w"), size = 1, shape = 1) +
+    geom_vline(xintercept = c(st, -st, 1.96, -1.96), linetype = "solid", color = "grey") +
+    labs(
+      x = TeX("$T_O$"),
+      y = TeX('Weight placed on $Y_U$'),
+      title = NULL
+    ) +
+    
+    theme_minimal() +
+    
+    theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.text = element_text(size = 14),
+      legend.title = element_blank()
+    ) +
+    
+    scale_x_continuous(
+      breaks = c(-3, -2, -1, 0, st, 1.96, 3),
+      limits = c(-3, 3),
+      labels = c('-3', '-2', '-1', '0', st_str, '1.96', '3')
+    ) +
+    scale_color_manual(values = cbp1, name = "",
+                       labels = c(TeX('Adaptive'),'Pre-test',
+                                  TeX('Soft-threshold'),'ERM')) +
+    scale_linetype_manual(values = shrinkage_linetypes, name = "",
+                          labels = c(TeX('Adaptive'),'Pre-test',
+                                     TeX('Soft-threshold'),'ERM')) +
+    guides(color = guide_legend(ncol = 3))  # Adjust the number of columns in the legend
+  print(plot)
+  ggsave(filename = figurename,
+         plot, width = 10, height = 10, units = "cm")
+  dev.off()
+  message("Figure saved successfully as ",figurename)
+  
 }
