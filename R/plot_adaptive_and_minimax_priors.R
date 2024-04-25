@@ -51,9 +51,9 @@ plot_adaptive_and_minimax_priors <- function(YR,YU,VR,VU,VUR) {
   minimax_low$x <- round(minimax_low$x*5)/5
   minimax_low_sum <- aggregate(z ~ x, minimax_low, sum)
   
-  index_high <- minimax$B.grid == 5
+  index_high <- minimax$B.grid == 4
   minimax_high <- data.frame(x = minimax$b.max.grid, z = minimax$prior.bounded.normal.mean.mat[, index_high])
-  minimax_high$x <- round(minimax_high$x * 5) / 5
+  minimax_high$x <- round(signif(minimax_high$x,2)*5)/5
   minimax_high_sum <- aggregate(z ~ x, minimax_high, sum)
   
   data_sum$z <- minimax_low_sum$z
@@ -70,20 +70,28 @@ plot_adaptive_and_minimax_priors <- function(YR,YU,VR,VU,VUR) {
     drop_na()
   
   data_sum_long$prior[data_sum_long$prior == "y"] <- "Adaptive"
-  data_sum_long$prior[data_sum_long$prior == "z"] <- "Least favorable given B=1"
-  data_sum_long$prior[data_sum_long$prior == "w"] <- "Least favorable given B=5"
+  data_sum_long$prior[data_sum_long$prior == "z"] <- "Under |b/SD($Y_R$-$Y_U$)|$\\leq$1"
+  data_sum_long$prior[data_sum_long$prior == "w"] <- "Under |b/SD($Y_R$-$Y_U$)|$\\leq$4"
   
   figurename <- paste("minimax_prior_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
   par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
   
   plot <- ggplot(data = data_sum_long,aes(x = x,y=probability, shape=prior, fill=prior )) +
     geom_bar(stat = "identity", position = position_identity(), alpha = 0.3) +
-    geom_point(size = 3)  +
-    labs(x = "b", y = "Prior") +
+    geom_point(size = 2)  +
+    labs(x = TeX("b/SD($Y_R$-$Y_U$)"), y = "Least favorable prior") +
     theme_minimal() +
     theme(panel.grid.major.x = element_blank(), panel.grid.minor.x = element_blank()) +
     scale_x_continuous(breaks = seq(min(b_grid), max(b_grid), by = 2))  +
-    theme(legend.position="bottom", legend.title=element_blank()) 
+    theme(legend.position="bottom", legend.title=element_blank()) + 
+    scale_fill_manual(values = cbp1, name = "",
+                      labels = c("Adaptive",
+                                 TeX("Under |b/SD($Y_R$-$Y_U$)|$\\leq$1"),
+                                 TeX("Under |b/SD($Y_R$-$Y_U$)|$\\leq$4"))) + 
+    scale_shape_manual(values = c(19,17,15), name = "",
+                      labels = c("Adaptive",
+                                 TeX("Under |b/SD($Y_R$-$Y_U$)|$\\leq$1"),
+                                 TeX("Under |b/SD($Y_R$-$Y_U$)|$\\leq$4")))
   
   print(plot)
   
