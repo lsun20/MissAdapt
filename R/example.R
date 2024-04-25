@@ -35,12 +35,35 @@ library(pracma) # meshgrid function
 library(xtable)
 library(ggplot2)
 library(tidyverse)
+# Define color and linetype preferences
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442")
+my_linetypes <- c('solid', 'dotted', 'dashed', 'dotdash','longdash')
+my_linetypes2 <- c('solid', 'solid', 'dashed', 'dotdash','longdash')
 
+library(latex2exp)
 # LOAD DATA FROM THE APPLICATION AS IN VIGNETTE PART 1 ================
 # Read in the robust and restrictive estimates and their variance-covariance matrix
+# Dobkin et al (2018)
 YR <- 2408.8413; VR <- 220.6057^2; # the restricted estimator and its squared standard error
 YU <- 2217.2312; VU <- 257.3961^2; # the robust estimator and its squared standard error
 VUR <- 211.4772^2; # the covariance between the restricted and robust estimators
+
+YR <- 1583.8849; VR <- 58092.664; # the restricted estimator and its squared standard error
+YU <- 1267.5861; VU <- 113500.66; # the robust estimator and its squared standard error
+VUR <- 51101.539; # the covariance between the restricted and robust estimators
+
+YR <- 1436.4159; VR <- 72626.227; # the restricted estimator and its squared standard error
+YU <- 989.00873; VU <- 185017.47; # the robust estimator and its squared standard error
+VUR <- 59411.754; # the covariance between the restricted and robust estimators
+
+YR <- 1813.0497; VR <- 97823.195; # the restricted estimator and its squared standard error
+YU <- 1233.902; VU <- 281037.34; # the robust estimator and its squared standard error
+VUR <- 73136.367; # the covariance between the restricted and robust estimators
+
+# Gentzkow et al (2011)
+YR <- 0.0026; VR <- 0.0009^2;
+YU <- 0.0043; VU <- 0.0014^2;
+VUR <- 0.7236*sqrt(VR*VU);
 
 # COMPUTE THE ADAPTIVE ESTIMATOR AND OUTPUT THE TABLE SHOWN IN THE 
 # VIGNETTE PART 3 =====================================================
@@ -90,6 +113,11 @@ row3 <- c(max_regret_results$max_regret_YU-1, Inf, NA,Inf,
           max_regret_results$max_regret_st-1,
           max_regret_results$max_regret_ttest-1)
 
+row5 <- c(0, Inf, NA,Inf,
+          max_regret_results$max_risk_adaptive-1, 
+          max_regret_results$max_risk_st_adaptive-1,
+          max_regret_results$max_risk_ht_ttest-1)
+
 # Create a matrix
 table_data <- rbind(row1, row2, row3, row4)
 
@@ -103,6 +131,20 @@ latex_table <- xtable(table_data, caption = "Summary for Robustness Checks")
 # Print the LaTeX table
 print(latex_table, include.rownames = FALSE, hline.after = c(-1, 0,
                                                              nrow(table_data)))
+
+# CALCULATE COVERAGE 
+# =====================================================================
+source("calculate_coverage.R")
+coverage_results <- calculate_coverage(YR, VR, YU, VU, VUR,B=1)
+
+table_data <- rbind(c(coverage_results$adaptive_sigmaU[2],coverage_results$flci_c,
+                      coverage_results$adaptive_flci[2],
+                    coverage_results$YRtest[2]),
+                    c(coverage_results$adaptive_sigmaU[1],NA,
+                      coverage_results$adaptive_flci[1],coverage_results$YRtest[1]))
+   
+xtable(table_data)
+
 
 # PLOT THE FIGURE OF MINIMAX ESTIMATES AS SHOWN IN THE VIGNETTE PART 4
 # =====================================================================
@@ -119,3 +161,13 @@ plot_adaptive_and_minimax_priors(YR, YU, VR, VU, VUR)
 # =====================================================================
 source("plot_adaptive_flci.R")
 plot_adaptive_flci(YR, YU, VR, VU, VUR)
+
+# PLOT THE SHRINKAGE PATTERN
+# =====================================================================
+source("plot_shrinkage_estimates.R")
+plot_shrinkage_estimates(YR, YU, VR, VU, VUR)
+
+# PLOT THE RISK FUNCTIONS
+# =====================================================================
+source("plot_adaptive_and_minimax_risk.R")
+plot_adaptive_and_minimax_risk(YR, YU, VR, VU, VUR)
