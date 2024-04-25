@@ -9,7 +9,7 @@ plot_adaptive_and_minimax_risk <- function(YR, YU, VR, VU, VUR) {
   corr <- VUO / sqrt(VO) / sqrt(VU)
   
   # Load lookup tables
-  policy <- readMat("../Matlab/lookup_tables/policy.mat")
+  soft_risk <- readMat('../Matlab/lookup_tables/risk_thresholds.mat');
   risk <- readMat("../Matlab/lookup_tables/risk.mat")
   minimax <- readMat('../Matlab/lookup_tables/risk_bounded_normal_mean.mat')   # Load minimax risk
   B_minimax_grid = seq(0.1,9,0.1);
@@ -25,10 +25,14 @@ plot_adaptive_and_minimax_risk <- function(YR, YU, VR, VU, VUR) {
   # Calculate adaptive risk
   Kb <- length(b_grid)
   risk_function_adaptive <- numeric(Kb)
-
+  risk_function_st_adaptive <- numeric(Kb)
+  
   for (i in 1:Kb) {
-    risk.spline.function <- splinefun(Sigma_UO_grid, risk$risk.mat[i,], method = "fmm", ties = mean)
+    # twice as fine a grid, so skip every other value
+    risk.spline.function <- splinefun(Sigma_UO_grid, risk$risk.mat[2*i-1,], method = "fmm", ties = mean)
     risk_function_adaptive[i] <- corr^2 * risk.spline.function(abs(corr))
+    risk.spline.function <- splinefun(Sigma_UO_grid, soft_risk$risk.st.mat[2*i-1,], method = "fmm", ties = mean)
+    risk_function_st_adaptive[i] <- corr^2 * risk.spline.function(abs(corr))
   }
    
   # Calculate oracle risk
@@ -50,10 +54,7 @@ plot_adaptive_and_minimax_risk <- function(YR, YU, VR, VU, VUR) {
   
   # Assuming b_grid_scale, risk_function_YR, VU, b_max_grid_scale, corr_str, risk_function_minimax,
   # B_minimax_grid, risk_function_oracle are defined appropriately in your R environment.
-  # Define color and linetype preferences
-  cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442")
-  my_linetypes <- c('solid', 'dotted', 'dashed', 'dotdash','longdash')
-  library(latex2exp)
+  
   
   # Create a data frame
   df <- data.frame(
@@ -99,7 +100,156 @@ plot_adaptive_and_minimax_risk <- function(YR, YU, VR, VU, VUR) {
   ggsave(filename = figurename,
          plot, width = 15, height = 10, units = "cm")
   
+  dev.off()
+  
+  # Use simulation to calculate the risk function for the pre-test estimator that switches btw Y_U and Y_R
+  sims <- 100000
+  x <- rnorm(sims, 0, 1)
+  x_b <- outer(x, as.vector(b_grid), "+")
+  Ebsims_ht <- function(l) {
+    colMeans(((x_b > l) * x_b + ((x_b < l & x_b > -l) * x_b) * (1 + VO/VUO) + (x_b < -l) * x_b
+         - matrix(rep(b_grid, sims), ncol = length(b_grid), byrow = TRUE))^2)
+  }
+  risk_function_ht_ttest <- corr^2 * Ebsims_ht(1.96) + 1 - corr^2
+  
+  x_erm <- (x_b^2)/(x_b^2+1) * x_b
+  
+  risk_function_erm <- corr^2 *colMeans((x_erm
+   - matrix(rep(b_grid, sims), ncol = length(b_grid), byrow = TRUE))^2) + 1 - corr^2
+  # Create a data frame
+  df <- data.frame(
+    b_grid_scale = b_grid_scale,
+    a = rep(1, Kb),
+    b = risk_function_adaptive,
+    c =  risk_function_st_adaptive,
+    d =  risk_function_ht_ttest,
+    e = risk_oracle
+  )
+  
+  # Melt the data frame to long format
+  df_long <- tidyr::gather(df, key = "series", value = "y", -b_grid_scale)
+  
+  figurename <- paste("minimax_risk_plot_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
+  par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
+  
+  # Plotting using ggplot2
+  plot <- ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
+    geom_line(size=1.2) +
+    labs(x = TeX("b/SD($Y_R$-$Y_U$)"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+    scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
+    ylim(c(min(risk_oracle-0.1), max(risk_function_ht_ttest)+0.1)) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.text = element_text(size = 12),  # Adjust legend text size
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 14)
+    ) +
+    scale_color_manual(values = cbp1, name = "",
+                       labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                  TeX('Soft-threshold'),
+                                  TeX('Pre-test'),'Oracle')) +
+    scale_linetype_manual(values = my_linetypes2, name = "",
+                          labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                     TeX('Soft-threshold'),
+                                     TeX('Pre-test'),'Oracle')) +
+    guides(color = guide_legend(ncol = 3))
+  print(plot)
+  ggsave(filename = figurename,
+         plot, width = 15, height = 10, units = "cm")
   
   dev.off()
+  
+  # Create a data frame
+  df <- data.frame(
+    b_grid_scale = b_grid_scale,
+    a = rep(1, Kb),
+    b = risk_function_adaptive,
+    c =  risk_function_st_adaptive,
+    d =  risk_function_erm,
+    e = risk_oracle
+  )
+  
+  # Melt the data frame to long format
+  df_long <- tidyr::gather(df, key = "series", value = "y", -b_grid_scale)
+  
+  figurename <- paste("erm_risk_plot_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
+  par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
+  
+  # Plotting using ggplot2
+  plot <- ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
+    geom_line(size=1.2) +
+    labs(x = TeX("b/SD($Y_R$-$Y_U$)"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+    scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
+    ylim(c(min(risk_oracle-0.1), max(risk_function_adaptive)+0.1)) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.text = element_text(size = 12),  # Adjust legend text size
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 14)
+    ) +
+    scale_color_manual(values = cbp1, name = "",
+                       labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                  TeX('Soft-threshold'),
+                                  TeX('ERM'),'Oracle')) +
+    scale_linetype_manual(values = my_linetypes2, name = "",
+                          labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                     TeX('Soft-threshold'),
+                                     TeX('ERM'),'Oracle')) +
+    guides(color = guide_legend(ncol = 3))
+  print(plot)
+  ggsave(filename = figurename,
+         plot, width = 15, height = 10, units = "cm")
+  
+  message("Figure saved successfully as ",figurename)
+  
+  figurename <- paste("adaptive_risk_plot_sigmatb_", round(abs(corr) * 100) / 100, "_B", B, ".png", sep = "")
+  par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
+  
+  # Create a data frame
+  df <- data.frame(
+    b_grid_scale = b_grid_scale,
+    a = rep(1, Kb),
+    b = risk_function_adaptive,
+    c =  corr^2 * minimax$risk.function.minimax[, B_minimax_grid == 1] + 1 - corr^2,
+    d =  corr^2 * minimax$risk.function.minimax[, B_minimax_grid == 4] + 1 - corr^2,
+    e = risk_oracle
+  )
+  
+  # Melt the data frame to long format
+  df_long <- tidyr::gather(df, key = "series", value = "y", -b_grid_scale)
+  # Plotting using ggplot2
+  plot <- ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
+    geom_line(size=1.2) +
+    labs(x = TeX("b/SD($Y_R$-$Y_U$)"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+    scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
+    ylim(c(min(risk_oracle-0.1), max(risk_function_ht_ttest)+0.1)) +
+    theme_minimal() +
+    theme(
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.text = element_text(size = 12),  # Adjust legend text size
+      axis.text = element_text(size = 14),
+      axis.title = element_text(size = 14)
+    ) +
+    scale_color_manual(values = cbp1, name = "",
+                       labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                  TeX('Minimax under |b/SD($Y_R$-$Y_U$)|$\\leq$1'),
+                                  TeX('Minimax under |b/SD($Y_R$-$Y_U$)|$\\leq$4'),'Oracle')) +
+    scale_linetype_manual(values = my_linetypes2, name = "",
+                          labels = c(TeX('$Y_U$'),TeX('Adaptive'),
+                                     TeX('Minimax under |b/SD($Y_R$-$Y_U$)|$\\leq$1'),
+                                     TeX('Minimax under |b/SD($Y_R$-$Y_U$)|$\\leq$4'),'Oracle')) +
+    guides(color = guide_legend(ncol = 3))
+  print(plot)
+  ggsave(filename = figurename,
+         plot, width = 15, height = 10, units = "cm")
+  
   message("Figure saved successfully as ",figurename)
 }
