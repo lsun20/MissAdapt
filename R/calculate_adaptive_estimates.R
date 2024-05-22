@@ -47,6 +47,11 @@ calculate_adaptive_estimates <- function(YR, VR, YU, VU, VUR) {
   st.function <- splinefun(Sigma_UO_grid, thresholds$st.mat, method = "fmm", ties = mean)
   st <- st.function(abs(corr))
   adaptive_st <- VUO / sqrt(VO) * ((tO > st) * (tO - st) + (tO < -st) * (tO + st)) + GMM
+
+  # Interpolate the hard-threshold estimate based on the estimated correlation coeff
+  ht.function <- splinefun(Sigma_UO_grid, thresholds$ht.mat, method = "fmm", ties = mean)
+  ht <- ht.function(abs(corr))
+  adaptive_ht <- VUO / sqrt(VO) * ((tO > ht) * (tO ) + (tO < -ht) * (tO)) + GMM
   
   # Calculate the ERM estimate as well as the adaptive
   erm <- VUO / sqrt(VO) * tO * (tO^2/(tO^2+1)) + GMM
@@ -54,13 +59,14 @@ calculate_adaptive_estimates <- function(YR, VR, YU, VU, VUR) {
   lambda <- lambda.function(abs(corr))
   adaptive_erm <- VUO / sqrt(VO) * tO * (tO^2/(tO^2+lambda)) + GMM
   results <- list(
-    st = st,
+    st = st, ht = ht,
     GMM = c(GMM, sqrt(V_GMM)),
     YO = c(YO, sqrt(VO)),
     adaptive_nonlinear = adaptive_nonlinear,
     adaptive_nonlinear_const = adaptive_nonlinear_const,
-    adaptive_st = adaptive_st,
+    adaptive_st = adaptive_st, adaptive_ht = adaptive_ht,
     erm = erm,
+    erm_lambda = lambda,
     adaptive_erm = adaptive_erm
   )
   
