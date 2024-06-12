@@ -8,3 +8,4 @@
 
 # Plots
 /R/*.png
+!/R/minimax_risk_plot_sigmatb_0.77_B9.png
