@@ -1,30 +1,30 @@
 # MissAdapt
 
 ## Introduction
-This repository provides code that replicates Figure 1 and key results from Tables 1 and 2 of [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf). In addition to the paper, the example included here is also explained in the beginning of the presentation at the Chamberlain online seminar, recorded [here](https://youtu.be/JrDsCW-1h6A).  
+This repository provides code that replicates key figures and results in the introductory example from [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf).  
 
-You can find the MATLAB and R code implementing the adaptive estimator, its soft-thresholding approximation, and their risk limited variants proposed in the paper. Matlab code is provided in the folder `/Matlab/`. R code is provided in the folder `/R/`. 
+You can find the R functions implementing the adaptive estimator, its soft-thresholding approximation, and their confidence intervals proposed in the paper. R code is provided in the folder `/R/`. Lagacy Matlab code is provided in the folder `/Matlab/`. 
 
 ## A vignette for example usage
 Here we provide an example usage of the adaptive estimator to results from the paper:  
 
-Dobkin, Carlos, Amy Finkelstein, Raymond Kluender, and Matthew J. Notowidigdo. 2018. "The Economic Consequences of Hospital Admissions." American Economic Review, 108 (2): 308-52.
+de Chaisemartin, C. and X. D’Haultfœuille (2020). Two-Way Fixed Effects Estimators with Heterogeneous Treatment Effects. American Economic Review 110 (9), 2964–2996
 
-In this example, the parameter of interest is the contemporaneous impact of hospitalization on out-of-pocket medical spending (in dollars per year). Two linear event study specifications are considered: an *unrestricted* specification that allows for a linear trend and a *restricted* specification that omits this trend. Both specifications are estimated by ordinary least squares. Interpreting these estimates is difficult because we can't be sure whether a trend is actually present or not.  If a linear trend is present, the restricted estimator will be biased, while the unrestricted estimator will remain unbiased. However, if no trend is present, the restricted estimator will be more precise. 
+In this example, the parameter of interest is the average effect of an additional newspaper in counties gaining or losing a newspaper, estimated using data from Gentzkow et al (2011). Two linear event study specifications are considered: an *unrestricted* specification that allows for heterogenous effects and a *restricted* specification that imposes homogeneity. If effects are indeed heterogenous over time and across counties, the restricted estimator will be biased, while the unrestricted estimator will remain unbiased. However, if no heterogeneity is present, the restricted estimator will be more precise. 
 
 The adaptive estimator pools information across the unrestricted and restricted estimators to arrive at a single estimate that yields a nearly optimal balance between precision and worst case bias. By "nearly optimal" we mean that the adaptive estimator achieves a worst case mean squared error (MSE) as close as possible to that of an *oracle* that knows the magnitude (but not the sign) of the bias faced by the restricted estimator. We call the excess worst case MSE of the adaptive estimator over the oracle the *adaptation regret*. A small adaptation regret indicates a nearly optimal balance is being struck between precision and robustness to potential biases. As discussed in the paper -- and illustrated below -- the adaptive estimator will always exhibit lower adaptation regret than selecting a model based upon a pre-test, with especially large differences resulting when such tests exhibit low power.
 
-While the vignette below is illustrated in `R`, this example can be implemented using either the `example.m` or `example.R` script.  Please note that the script assumes that the `MATLAB/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
+The vignette below is illustrated in `R` using the `example.R` script.  Please note that the script assumes that the `MATLAB/lookup_tables/` directory, which contains the pre-tabulated adaptive estimators, is correctly downloaded and referenced in the provided paths.
 	
 ### 1. Load data
-We first load the typical data reported in robustness checks: the unrestricted `YU` and restricted `YR` estimates of the impact of hospitalization on out-of-pocket medical spending. We also load their variance-covariance matrix `VR, VU, VUR`. Note that the covariance `VUR` between the two estimators is similar to the restricted estimator's variance `VR`, suggesting that, in the absence of bias, the restricted estimator `YR` would be nearly efficient. 
+We first load the typical data reported in robustness checks: the unrestricted `YU` and restricted `YR` estimates (replicated from Table 3 of de Chaisemartin and D’Haultfœuille, 2020). We also load their variance-covariance matrix `VR, VU, VUR`. Note that the covariance `VUR` between the two estimators is similar to the restricted estimator's variance `VR`, suggesting that, in the absence of bias, the restricted estimator `YR` would be nearly efficient. 
 ```r
-YR <- 2409; VR <- 221^2; # the restricted estimator and its squared standard error
-YU <- 2217; VU <- 257^2; # the unrestricted estimator and its squared standard error
-VUR <- 211^2; # the covariance between the restricted and robust estimators
+YR <- 0.0026; VR <- 0.0009^2; # the restricted estimator and its squared standard error
+YU <- 0.0043; VU <- 0.0014^2; # the unrestricted estimator and its squared standard error
+VUR <- 0.7236*sqrt(VR*VU); # the covariance between the restricted and robust estimators
 ```
 ### 2. Gather the inputs needed for adapting to misspecification: over-ID test statistic and the correlation coefficient
-We calculate the over-identification (over-ID) test statistic to be `tO=1.2`:
+We calculate the over-identification (over-ID) test statistic to be `tO=-1.74`:
 ```r
 YO <- YR - YU; VO <- VR - 2*VUR + VU;
 tO <- YO / sqrt(VO);
@@ -41,17 +41,16 @@ Based on the correlation coefficient, we interpolate the adaptive estimator base
 adaptive_estimate_results <- calculate_adaptive_estimates(YR, VR, YU, VU, VUR)
 max_regret_results <- calculate_max_regret(VR, VU, VUR)
 ```
-The results returned by these two functions are summarized in the table below. In this case, the pre-test estimator, which chooses between the restricted estimator $Y_{R}$ and the robust estimator $Y_{U}$ based on the over-identification statistic, exhibits a large max regret of 68%. Intuitively, while the pre-test may perform well if the bias is very large -- in which case $Y_{U}$ will be selected -- or very small -- in which case $Y_{R}$ will be selected -- there exist intermediate values of bias at which the pre-test estimator becomes very noisy because it has low power.
+The results returned by these two functions are summarized in the table below. In this case, the pre-test estimator, which chooses between the restricted estimator $Y_{R}$ and the robust estimator $Y_{U}$ based on the over-identification statistic, exhibits a large max regret of 134%. Intuitively, while the pre-test may perform well if the bias is very large -- in which case $Y_{U}$ will be selected -- or very small -- in which case $Y_{R}$ will be selected -- there exist intermediate values of bias at which the pre-test estimator becomes very noisy because it has low power.
 
-In contrast, the adaptive estimator provides exhibits a max regret of only 15%, indicating near oracle performance. That is, the adaptive estimator exposes the researcher to worst case MSE only 15% greater than what they would face if the magnitude of any confounding trend were known ex-ante.
+In contrast, the adaptive estimator provides exhibits a max regret of only 44%, indicating near oracle performance. That is, the adaptive estimator exposes the researcher to worst case MSE only 44% greater than what they would face if the magnitude of any confounding trend were known ex-ante.
 
 <div align="center">
   <table>
     <tr>
-      <th>Hospitalization Year=0</th>
+      <th></th>
       <th>$Y_{U}$</th>
       <th>$Y_{R}$</th>
-      <th>$Y_O$</th>
       <th>GMM</th>
       <th>Adaptive</th>
       <th>Soft-threshold</th>
@@ -59,37 +58,33 @@ In contrast, the adaptive estimator provides exhibits a max regret of only 15%, 
     </tr>
     <tr>
       <td>Estimate</td>
-      <td>2,217</td>
-      <td>2,409</td>
-      <td>192</td>
-      <td>2,379</td>
-      <td>2,302</td>
-      <td>2,287</td>
-      <td>2,409</td>
+      <td>0.43</td>
+      <td>0.26</td>
+      <td>0.24</td>
+      <td>0.36</td>
+      <td>0.36</td>
+      <td>0.24</td>
     </tr>
     <tr>
       <td>Std Error</td>
-      <td>(257)</td>
-      <td>(221)</td>
-      <td>(160)</td>
-      <td>(219)</td>
+      <td>(0.14)</td>
+      <td>(0.09)</td>
+      <td>(0.09)</td>
       <td></td>
       <td></td>
       <td></td>
     </tr>
     <tr>
       <td>Max Regret</td>
-      <td>38%</td>
+      <td>145%</td>
       <td>∞</td>
-      <td></td>
       <td>∞</td>
-      <td>15%</td>
-      <td>15%</td>
-      <td>68%</td>
+      <td>44%</td>
+      <td>46%</td>
+      <td>145%</td>
     </tr>
     <tr>
       <td>Threshold</td>
-      <td></td>
       <td></td>
       <td></td>
       <td></td>
@@ -105,15 +100,13 @@ The GMM estimate is efficient when `YR` is unbiased (i.e., when no trend is pres
 ```r
 GMM <- YU - VUO /VO * YO;
 ```
-### 4. Plot the locus of minimax estimates 
-The oracle performance mentioned in the previous section can be visualized in terms of a locus of $B$*-minimax* estimates, each of which minimizes the worst case risk under subject to an upper bound $B$ on the magnitude of the bias. Lower values of $B$ allow greater gains in precision because bias is less of a concern. For example, the $0$-minimax estimator is GMM, which exhibits the lowest variance, while the $\infty$-minimax estimator is $Y_U$, which exhibits the highest variance but is maximally robust. If one is willing to stipulate a finite bound $B$ in an application, the $B$-minimax estimator may be preferable to the adaptive estimator.
-
-The wrapper function `plot_adaptive_and_minimax_estimates()` returns the $B$-minimax estimates, along with their worst case risk, and the worst case risk of the adaptive estimator that doesn't require specifying the bound $B$. 
+### 4. Plot the risk function
+The adaptive performance mentioned in the previous section can be visualized in terms of the distance of different estimators relative oracle.  The wrapper function `plot_adaptive_and_minimax_risk()` returns the risk as a function of scaled bias $b/\sigma_O.$
 ```r
-plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)  
+plot_adaptive_and_minimax_risk(YR, YU, VR, VU, VUR)  
 ```
 <p align="center">
-  <img src="./R/minimax_locus_sigmatb_0.52_B9.png" alt="Locus of Minimax Estimates">
+  <img src="./R/minimax_risk_plot_sigmatb_0.77_B9.png" alt="Locus of Minimax Estimates">
 </p>
 
 From this plot, we see that as $B$ increases, the $B$-minimax estimator asymptotes towards $Y_U$. The worst case risk is shown on the second y-axis where, for convenience, the MSE of $Y_U$ has been normalized to one. In this case, if the bias were known to the be zero, the GMM estimator would yield worst case risk nearly 30\% below $Y_U$. The adaptive estimator's worst case risk exceeds the oracle's worst case risk at all bias magnitudes, which is the price the researcher must pay for not knowing the bound $B$ ahead of time. However, the adaptive estimator's worst case risk comes as close to the oracle's worst case risk across all bias magnitudes as possible. See Section 3 of [Armstrong, Kline, Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf) for further discussion.
