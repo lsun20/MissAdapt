@@ -43,27 +43,12 @@ my_linetypes2 <- c('solid', 'solid', 'dashed', 'dotdash','longdash')
 library(latex2exp)
 # LOAD DATA FROM THE APPLICATION AS IN VIGNETTE PART 1 ================
 # Read in the robust and restrictive estimates and their variance-covariance matrix
-# Dobkin et al (2018)
-YR <- 2408.8413; VR <- 220.6057^2; # the restricted estimator and its squared standard error
-YU <- 2217.2312; VU <- 257.3961^2; # the robust estimator and its squared standard error
-VUR <- 211.4772^2; # the covariance between the restricted and robust estimators
-
-YR <- 1583.8849; VR <- 58092.664; # the restricted estimator and its squared standard error
-YU <- 1267.5861; VU <- 113500.66; # the robust estimator and its squared standard error
-VUR <- 51101.539; # the covariance between the restricted and robust estimators
-
-YR <- 1436.4159; VR <- 72626.227; # the restricted estimator and its squared standard error
-YU <- 989.00873; VU <- 185017.47; # the robust estimator and its squared standard error
-VUR <- 59411.754; # the covariance between the restricted and robust estimators
-
-YR <- 1813.0497; VR <- 97823.195; # the restricted estimator and its squared standard error
-YU <- 1233.902; VU <- 281037.34; # the robust estimator and its squared standard error
-VUR <- 73136.367; # the covariance between the restricted and robust estimators
 
 # Gentzkow et al (2011)
 YR <- 0.0026; VR <- 0.0009^2;
 YU <- 0.0043; VU <- 0.0014^2;
-VUR <- 0.7236*sqrt(VR*VU);
+# VUR <- 0.7236*sqrt(VR*VU);
+VUR <- VR; # if we treat YR as efficient
 
 # COMPUTE THE ADAPTIVE ESTIMATOR AND OUTPUT THE TABLE SHOWN IN THE 
 # VIGNETTE PART 3 =====================================================
@@ -91,10 +76,11 @@ row1 <- c(YU, YR, adaptive_estimate_results$YO[1],
           adaptive_estimate_results$GMM[1], 
           adaptive_estimate_results$adaptive_nonlinear,
           adaptive_estimate_results$adaptive_st, 
-          YU*(abs(tO)>1.96)+YR*(abs(tO)<1.96))
+          YU*(abs(tO)>1.96)+YR*(abs(tO)<1.96),
+          adaptive_estimate_results$adaptive_ht)
 row2 <- c(sqrt(VU), sqrt(VR), adaptive_estimate_results$YO[2],
-          adaptive_estimate_results$GMM[2], NA, NA, NA)
-row4 <- c( NA, NA, NA, NA, NA,adaptive_estimate_results$st,1.96)
+          adaptive_estimate_results$GMM[2], NA, NA, NA, NA)
+row4 <- c( NA, NA, NA, NA, NA,adaptive_estimate_results$st,1.96,adaptive_estimate_results$ht)
 
 
 # Calculate the correlation coefficient, which determines the worst-case bias-variance tradeoff
@@ -111,16 +97,24 @@ max_regret_results <- calculate_max_regret(VR, VU, VUR) # needs the correlation 
 row3 <- c(max_regret_results$max_regret_YU-1, Inf, NA,Inf,
           max_regret_results$max_regret_nonlinear-1, 
           max_regret_results$max_regret_st-1,
-          max_regret_results$max_regret_ttest-1)
+          max_regret_results$max_regret_ht-1,
+          max_regret_results$max_regret_ttest-1,
+          max_regret_results$max_regret_erm-1,
+          max_regret_results$max_regret_adaptive_erm-1)
 
 row5 <- c(0, Inf, NA,Inf,
           max_regret_results$max_risk_adaptive-1, 
           max_regret_results$max_risk_st_adaptive-1,
-          max_regret_results$max_risk_ht_ttest-1)
+          max_regret_results$max_risk_ht_adaptive-1,
+          max_regret_results$max_risk_ht_ttest-1,
+          max_regret_results$max_risk_erm-1,
+          max_regret_results$max_risk_adaptive_erm-1)
 
 # Create a matrix
 table_data <- rbind(row1, row2, row3, row4)
-
+library(scales)
+percent(row3, accuracy = 1)
+percent(row5, accuracy = 1)
 # Create a LaTeX table using xtable package
 colnames(table_data) <- c("YU", "YR", "YO", "GMM", "Adaptive",
                           "Soft-threshold", "Pre-test")
@@ -132,24 +126,32 @@ latex_table <- xtable(table_data, caption = "Summary for Robustness Checks")
 print(latex_table, include.rownames = FALSE, hline.after = c(-1, 0,
                                                              nrow(table_data)))
 
+# PLOT THE RISK FUNCTIONS
+# =====================================================================
+source("plot_adaptive_and_minimax_risk.R")
+plot_adaptive_and_minimax_risk(YR, YU, VR, VU, VUR)
+
+
 # CALCULATE COVERAGE 
 # =====================================================================
 source("calculate_coverage.R")
-coverage_results <- calculate_coverage(YR, VR, YU, VU, VUR,B=1)
+coverage_results <- calculate_coverage(YR, VR, YU, VU, VUR,B=9)
 
-table_data <- rbind(c(coverage_results$adaptive_sigmaU[2],coverage_results$flci_c,
-                      coverage_results$adaptive_flci[2],
-                    coverage_results$YRtest[2]),
-                    c(coverage_results$adaptive_sigmaU[1],NA,
-                      coverage_results$adaptive_flci[1],coverage_results$YRtest[1]))
+table_data <- rbind(c(coverage_results$YRtest[2], coverage_results$pretest[2],
+                      coverage_results$adaptive_sigmaU[2], 
+                        coverage_results$adaptive_st_sigmaU[2]),
+                    c(coverage_results$YRtest[1], coverage_results$pretest[1],
+                      coverage_results$adaptive_sigmaU[1], 
+                      coverage_results$adaptive_st_sigmaU[1]))
    
 xtable(table_data)
 
+table_data <- rbind(c(coverage_results$adaptive_flci[2], coverage_results$adaptive_st_flci[2]),
+                    c(coverage_results$adaptive_flci[1], coverage_results$adaptive_st_flci[1]),
+                    c(coverage_results$flci_c,
+                      coverage_results$flci_st_c))
+xtable(table_data)
 
-# PLOT THE FIGURE OF MINIMAX ESTIMATES AS SHOWN IN THE VIGNETTE PART 4
-# =====================================================================
-source("plot_adaptive_and_minimax_estimates.R")
-plot_adaptive_and_minimax_estimates(YR, YU, VR, VU, VUR)
 
 # PLOT THE FIGURE OF LEAST FAV. PRIORS ASSOCIATED WITH MINIMAX ESTIMATES
 # =====================================================================
@@ -157,17 +159,10 @@ source("plot_adaptive_and_minimax_priors.R")
 plot_adaptive_and_minimax_priors(YR, YU, VR, VU, VUR)
 
 
-# PLOT THE FIGURE OF FIXED LENGTH CI FOR ADAPTIVE ESTIMATES
-# =====================================================================
-source("plot_adaptive_flci.R")
-plot_adaptive_flci(YR, YU, VR, VU, VUR)
 
 # PLOT THE SHRINKAGE PATTERN
 # =====================================================================
 source("plot_shrinkage_estimates.R")
 plot_shrinkage_estimates(YR, YU, VR, VU, VUR)
 
-# PLOT THE RISK FUNCTIONS
-# =====================================================================
-source("plot_adaptive_and_minimax_risk.R")
-plot_adaptive_and_minimax_risk(YR, YU, VR, VU, VUR)
+
