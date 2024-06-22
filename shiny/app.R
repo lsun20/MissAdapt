@@ -7,7 +7,9 @@ ui <- fluidPage(
   # Application title
   titlePanel("Adaptive Soft Threshold for Combining Unrestricted and Restricted estimates"),
   # Description line below the title
-  h4("Shiny app based on the MissAdapt function. For more functionality visit: ", a("https://github.com/lsun20/MissAdapt", href = "https://github.com/lsun20/MissAdapt")),
+  h4("Shiny app based on the MissAdapt function. For more functionality visit: ", 
+     a("https://github.com/lsun20/MissAdapt", 
+       href = "https://github.com/lsun20/MissAdapt",target="_blank")),
   
   sidebarLayout(
     sidebarPanel(
