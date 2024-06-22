@@ -5,11 +5,11 @@ library(shiny)
 ui <- fluidPage(
   
   # Application title
-  titlePanel("Adaptive Soft Threshold for Combining Unrestricted and Restricted estimates"),
+  titlePanel("Adaptive Soft Threshold for Combining Unrestricted and Restricted Estimates"),
   # Description line below the title
-  h4("Shiny app based on the MissAdapt function. For more functionality visit: ", 
-     a("https://github.com/lsun20/MissAdapt", 
-       href = "https://github.com/lsun20/MissAdapt",target="_blank", rel="noreferrer noopener")),
+  h4("Shiny App based on the MissAdapt repository."),
+  h4("Adapts to bias due to potential misspecification of the restriction via soft-thresholding."),
+  h4("For more functionality refer to the vignette on GitHub."),
   
   sidebarLayout(
     sidebarPanel(
