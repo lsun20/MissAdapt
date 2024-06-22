@@ -1,7 +1,7 @@
 # MissAdapt
 
 ## Introduction
-This repository provides code that replicates key figures and results in the introductory example from [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf).  
+This repository provides code that replicates key figures and results in the introductory example from [Armstrong, Kline, and Sun (2023)](https://arxiv.org/pdf/2305.14265.pdf).  A simpler Shiny app version is available [online](https://lsun20.github.io/MissAdapt/).
 
 You can find the R functions implementing the adaptive estimator, its soft-thresholding approximation, and their confidence intervals proposed in the paper. R code is provided in the folder `/R/`. Lagacy Matlab code is provided in the folder `/Matlab/`. 
 
