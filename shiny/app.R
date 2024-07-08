@@ -1,6 +1,14 @@
 # Load necessary libraries
 library(shiny)
+source("grid.R")
+library(ggplot2)
+library(tidyverse)
+# Define color and linetype preferences
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442")
+my_linetypes <- c('solid', 'dotted', 'dashed', 'dotdash','longdash')
+my_linetypes2 <- c('solid', 'solid', 'dashed', 'dotdash','longdash')
 
+library(latex2exp)
 # Define UI for application
 ui <- fluidPage(
   
@@ -15,22 +23,25 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       fluidRow(
-        column(6, numericInput("YU", "Unrestricted estimate (YU):", value = 0.0043)),
-        column(6, numericInput("sigmaU", "Standard error (sigmaU):", value = 0.0014))
+        column(6, numericInput("YU", "Unrestricted estimate (YU):", value = 0.43)),
+        column(6, numericInput("sigmaU", "Standard error (sigmaU):", value = 0.14))
       ),
       fluidRow(
-        column(6, numericInput("YR", "Restricted estimate (YR):", value = 0.0026)),
-        column(6, numericInput("sigmaR", "Standard error (sigmaR):", value = 0.0009))
+        column(6, numericInput("YR", "Restricted estimate (YR):", value = 0.26)),
+        column(6, numericInput("sigmaR", "Standard error (sigmaR):", value = 0.09))
       ),
-      numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets VUR to sigmaR^2):", value = 0.0009^2, step = 0.1),
+      numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets VUR to sigmaR^2):", value = 0.09^2, step = 0.1),
       actionButton("compute", "Adapt")
     ),
     
     mainPanel(
+
+      # Output: Table summarizing the values entered ----
+      tableOutput("values"),
       textOutput("corr_output"),
       textOutput("st_output"),
-      textOutput("estimate_output")
-      
+      textOutput("estimate_output"),
+      plotOutput('plot')
     )
   )
 )
@@ -53,19 +64,7 @@ server <- function(input, output,session) {
     VO <- VR - 2 * VUR + VU
     VUO <- (VUR - VU)
     corr <- VUO / sqrt(VO) / sqrt(VU)
-  # Precompute the function
-  st_thresholds_grid <- c(1.57482766198508, 1.55125499909256, 1.52742074353448, 1.50334882329505, 1.47906233490077, 
-                          1.45458150029266, 1.4299270409132, 1.40512383967876, 1.38019303478176, 1.35515605260822, 
-                          1.33003227704614, 1.30483757026634, 1.27959849366401, 1.25433502048039, 1.22906433002374, 
-                          1.20379862855458, 1.17856184780166, 1.15337076343841, 1.12824236155291, 1.10319422804627, 
-                          1.07824432631491, 1.05340561586754, 1.02870454439195, 1.00416561484403, 0.979813578603983, 
-                          0.955673742841495, 0.931764912197942, 0.908115155200027, 0.884752852219577, 0.861705205296034, 
-                          0.838984986407601, 0.816633434009214, 0.794675112145209, 0.7731297065466, 0.752040905293611, 
-                          0.731416663001888, 0.711309030584423, 0.69172503640683, 0.672713172851095, 0.654291308290986, 
-                          0.636491137084625, 0.619350676770425, 0.602881936878391, 0.58712468096191, 0.57210936993747, 
-                          0.557856650375231, 0.544387216517243, 0.531735712033272, 0.519924940086376, 0.508976432315778, 
-                          0.498906428201768, 0.489732214564344, 0.481477367692955, 0.474157387541963, 0.467784346318755, 
-                          0.462372207805892, 0.457930286791032, 0.454466861185033, 0.451997110894451, 0.450509551844624)
+  
   
   Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
   
@@ -80,6 +79,82 @@ server <- function(input, output,session) {
   adaptive_st <- round(adaptive_st,decimal)
   tO <- round(tO,decimal)
   GMM <- round(GMM,decimal)
+  # Add soft threshold risk functions
+  Eb <- function(l) 1 + l^2 + (b_grid^2 - 1 - l^2) * (pnorm(l - b_grid) - pnorm(-l - b_grid)) + (-b_grid - l) * dnorm(l - b_grid) - (l - b_grid) * dnorm(-l - b_grid)
+  
+  risk_function_st <- corr^2 * Eb(st) + 1 - corr^2 
+  risk_oracle <- corr^2 * rho_b_over_sigma + 1 - corr^2
+  
+  regret_st <- round(max(risk_function_st/risk_oracle),2)-1
+  
+  # Use simulation to calculate the risk function for the pre-test estimator that switches btw Y_U and Y_R
+  # sims <- 100000
+  # x <- rnorm(sims, 0, 1)
+  # x_b <- outer(x, as.vector(b_grid), "+")
+  # Ebsims_ht <- function(l) {
+  #   colMeans(((x_b > l) * x_b + ((x_b < l & x_b > -l) * x_b) * (1 + VO/VUO) + (x_b < -l) * x_b
+  #             - matrix(rep(b_grid, sims), ncol = length(b_grid), byrow = TRUE))^2)
+  # }
+  # risk_function_ht_ttest <- corr^2 * Ebsims_ht(1.96) + 1 - corr^2
+  
+  # Calculate the risk function for the pre-test estimator that switches btw Y_U and GMM
+  # Eb_ht <-function(l){
+  #   1+(b_grid^2-1)*(pnorm(l-b_grid)-pnorm(-l-b_grid))+(l-b_grid)*dnorm(l-b_grid) - (-l-b_grid)*dnorm(-l-b_grid);
+  # } 
+  # risk_function_ht_ttest <- corr^2 * Eb_ht(1.96) + 1 - corr^2
+  
+  # regret_ht <- round(max(risk_function_ht_ttest/risk_oracle),2)-1
+  # Show the values in an HTML table ----
+  output$values <- renderTable({
+    data.frame(
+      Metric = c("Estimate", "Std Error", "Max Regret", "Threshold"),
+      Y_U = c(YU, paste("(",sigmaU,")",sep=""), paste(100*round(1/(1-corr^2)-1,2), "%", sep=""), NA),
+      Y_R = c(YR, paste("(",sigmaR,")",sep=""), "∞", NA),
+      # Adaptive = c(0.36, NA, "44%", NA),
+      Soft_threshold = c(0.36, NA, paste(regret_st*100, "%", sep=""), round(st,3)),
+      # Pre_test = c(0.26, NA, paste(regret_ht*100, "%", sep=""), "1.96"),
+      stringsAsFactors = FALSE)
+  })
+  
+  # Create a data frame of only adaptive risk
+  # Plot the figure
+  b_grid_scale <- sign(b_grid)*sqrt(abs(b_grid));
+  df <- data.frame(
+    b_grid_scale = b_grid_scale,
+    a = rep(1, Kb),
+    b = risk_function_st,
+    # c = risk_function_ht_ttest,
+    e = risk_oracle
+  )
+  
+  # Melt the data frame to long format
+  df_long <- tidyr::gather(df, key = "series", value = "y", -b_grid_scale)
+  
+  output$plot <- renderPlot({
+    par(mar = c(5, 5, 4, 5), pty = 'm',cex=1.2)  # Adjust margins as needed
+    
+    # Plotting using ggplot2
+    ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
+      geom_line(size=1.2) +
+      labs(x = TeX("b/$\\sigma_O$"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+      scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
+      ylim(c(min(risk_oracle-0.1), max(risk_function_st)+0.1)) +
+      theme_minimal() +
+      theme(
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.box = "horizontal",
+        legend.text = element_text(size = 12),  # Adjust legend text size
+        axis.text = element_text(size = 14),
+        axis.title = element_text(size = 14)
+      ) +
+      scale_color_manual(values = cbp1, name = "",
+                         labels = c(TeX('$Y_U$'),TeX('Adaptive'),'Oracle')) +
+      scale_linetype_manual(values = my_linetypes2, name = "",
+                            labels = c(TeX('$Y_U$'),TeX('Adaptive'),'Oracle')) +
+      guides(color = guide_legend(ncol = 3))
+  })
+  
   output$corr_output <- renderText({
     paste("The correlation coefficient between YU and (YR-YU) is ", round(corr,3),
           ", which implies the efficient estimate is ",GMM,
