@@ -149,16 +149,18 @@ server <- function(input, output,session) {
         axis.title = element_text(size = 14)
       ) +
       scale_color_manual(values = cbp1, name = "",
-                         labels = c(TeX('$Y_U$'),TeX('Adaptive'),'Oracle')) +
+                         labels = c(TeX('$Y_U$'),TeX('Adaptive soft-threshold'),'Oracle')) +
       scale_linetype_manual(values = my_linetypes2, name = "",
-                            labels = c(TeX('$Y_U$'),TeX('Adaptive'),'Oracle')) +
+                            labels = c(TeX('$Y_U$'),TeX('Adaptive soft-threshold'),'Oracle')) +
       guides(color = guide_legend(ncol = 3))
   })
   
   output$corr_output <- renderText({
     paste("The correlation coefficient between YU and (YR-YU) is ", round(corr,3),
-          ", which implies the efficient estimate is ",GMM,
-          " and the efficiency of YU relative to the efficient estimate is ", round(1-corr^2,3),".")
+          ", which implies the efficient estimate when YR is correctly specified is ",GMM,
+          " and the efficiency of YU relative to the efficient estimate is ", round(1-corr^2,3),".",
+          "If YR is subject to potential bias, then the figure below illustrates the smallest possible risk that accounts for the bias, which is the oracle performance.",
+          "Adaptation seeks to minimize the max. regret, which is the worst-case deviation from the oracle risk function.")
   })
   output$st_output <- renderText({
     paste("Given the relative efficiency, the soft threshold that achieves optimal adaptation is ", round(st,3),".")
