@@ -1,5 +1,6 @@
 # Load necessary libraries
 library(shiny)
+library(bslib)
 source("grid.R")
 library(ggplot2)
 library(tidyverse)
@@ -20,8 +21,7 @@ ui <- fluidPage(
   h4("For more functionality refer to the vignette on", a("GitHub.", 
   href = "https://github.com/lsun20/MissAdapt",target="_blank", rel="noreferrer noopener")),
   
-  sidebarLayout(
-    sidebarPanel(
+ 
       fluidRow(
         column(6, numericInput("YU", "Unrestricted estimate (YU):", value = 0.43)),
         column(6, numericInput("sigmaU", "Standard error (sigmaU):", value = 0.14))
@@ -30,20 +30,45 @@ ui <- fluidPage(
         column(6, numericInput("YR", "Restricted estimate (YR):", value = 0.26)),
         column(6, numericInput("sigmaR", "Standard error (sigmaR):", value = 0.09))
       ),
-      numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets VUR to sigmaR^2):", value = 0.09^2, step = 0.1),
-      actionButton("compute", "Adapt")
+  fluidRow(
+    column(6,numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets to sigmaR^2):", value = 0.09^2, step = 0.1)),
+           column(6, actionButton("compute", "Adapt"))
     ),
     
-    mainPanel(
-
-      # Output: Table summarizing the values entered ----
-      tableOutput("values"),
-      textOutput("corr_output"),
-      textOutput("st_output"),
-      textOutput("estimate_output"),
-      plotOutput('plot')
-    )
-  )
+    fluidRow(
+             div(
+               style = "display: flex; justify-content: center; flex-direction: column; align-items: center;",
+               conditionalPanel(
+                 condition = "input.compute > 0",
+                 h4("Summary of the Adaptation Results"),
+                 tableOutput("values")
+               )
+             )
+    ),
+    fluidRow(
+      column(12,
+             div(
+               conditionalPanel(
+                 style = "margin-top: 10px;",
+                 condition = "input.compute > 0",
+                 h4("Explanation for Adaptation"),
+                 tags$ul(
+                   tags$li(textOutput("corr_output")),
+                   tags$li(textOutput("st_output")),
+                   tags$li(textOutput("estimate_output"))
+                 )
+               )
+             )
+        )
+      ),
+      fluidRow(
+        div(
+          style = "display: flex; justify-content: center; flex-direction: column; align-items: center;",
+          plotOutput('plot', width = "400px", height = "300px")
+        )
+      )
+    
+  
 )
 
 # Define server logic
@@ -107,11 +132,11 @@ server <- function(input, output,session) {
   # Show the values in an HTML table ----
   output$values <- renderTable({
     data.frame(
-      Metric = c("Estimate", "Std Error", "Max Regret", "Threshold"),
+      Estimator = c("Estimate", "Std Error", "Max Regret", "Threshold"),
       Y_U = c(YU, paste("(",sigmaU,")",sep=""), paste(100*round(1/(1-corr^2)-1,2), "%", sep=""), NA),
       Y_R = c(YR, paste("(",sigmaR,")",sep=""), "∞", NA),
       # Adaptive = c(0.36, NA, "44%", NA),
-      Soft_threshold = c(0.36, NA, paste(regret_st*100, "%", sep=""), round(st,3)),
+      Soft_threshold = c(adaptive_st, NA, paste(regret_st*100, "%", sep=""), round(st,2)),
       # Pre_test = c(0.26, NA, paste(regret_ht*100, "%", sep=""), "1.96"),
       stringsAsFactors = FALSE)
   })
@@ -156,35 +181,35 @@ server <- function(input, output,session) {
   })
   
   output$corr_output <- renderText({
-    paste("The correlation coefficient between YU and (YR-YU) is ", round(corr,3),
-          ", which implies the efficient estimate when YR is correctly specified is ",GMM,
-          " and the efficiency of YU relative to the efficient estimate is ", round(1-corr^2,3),".",
-          "If YR is subject to potential bias, then the figure below illustrates the smallest possible risk that accounts for the bias, which is the oracle performance.",
-          "Adaptation seeks to minimize the max. regret, which is the worst-case deviation from the oracle risk function.")
+    paste("The correlation coefficient between YU and (YR-YU) is ", paste(round(corr,2),",",sep=""),
+          "which implies the efficient GMM estimate when YR is correctly specified is ",GMM,
+          " and the efficiency of YU relative to the efficient GMM estimate is ", paste(round(1-corr^2,2),".",sep=""),
+          "If YR is subject to potential bias, then the line labeled ''oracle'' in the figure below illustrates the smallest possible risk that can be achieved when only a bound on the bias magnitude is known.",
+          "Adaptation seeks to minimize the maximum regret, which is the worst-case deviation from this oracle risk function.")
   })
   output$st_output <- renderText({
-    paste("Given the relative efficiency, the soft threshold that achieves optimal adaptation is ", round(st,3),".")
+    paste("Given the relative efficiency of YU and the efficient GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), "The maximum regret in this case is",paste(regret_st*100, "%.", sep=""))
   })
   
   if (-st < tO & tO < st) {
     output$estimate_output <- renderText({
       paste("Since (YR-YU)/std(YR-YU) = ",tO,
-            " does not exceed the threshold, adaptation maintains to be the efficient estimate ",
-            adaptive_st,".")
+            "does not exceed the threshold, the adaptive soft thresholding estimator maintains to be the efficient GMM estimate, yielding",
+            paste(adaptive_st,".",sep=""))
       })
   }
   if (tO <=-st ) {
     output$estimate_output <- renderText({
       paste("Since (YR-YU)/std(YR-YU) = ",tO,
-            " is negative and below threshold, adaptation translates YU toward the efficient estimate and obtains ",
-            adaptive_st,".")
+            "is negative and below the threshold, the adaptive soft thresholding estimator translates YU toward the GMM efficient estimate, yielding",
+            paste(adaptive_st,".",sep=""))
     })
   }
   if (tO >= st ) {
     output$estimate_output <- renderText({
       paste("Since (YR-YU)/std(YR-YU) = ",tO,
-            " is positive and above threshold, adaptation translates YU toward the efficient estimate and obtains ",
-            adaptive_st,".")
+            "is positive and above the threshold, the adaptive soft thresholding estimator translates YU toward the efficient GMM estimate, yielding",
+            paste(adaptive_st,".",sep=""))
     })
   }
   })
