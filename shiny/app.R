@@ -54,8 +54,9 @@ ui <- fluidPage(
                  h4("Explanation for Adaptation"),
                  tags$ul(
                    tags$li(textOutput("corr_output")),
+                   tags$li(textOutput("estimate_output")),
                    tags$li(textOutput("st_output")),
-                   tags$li(textOutput("estimate_output"))
+                   tags$li(textOutput("cv_output"))
                  )
                )
              )
@@ -129,14 +130,37 @@ server <- function(input, output,session) {
   # risk_function_ht_ttest <- corr^2 * Eb_ht(1.96) + 1 - corr^2
   
   # regret_ht <- round(max(risk_function_ht_ttest/risk_oracle),2)-1
+  
+  ### Calculate the coverage distortion
+  Sigma_UO_grid <- tanh(seq(-3, -0.05, 0.05))
+  flci_st_c_function <-  splinefun(Sigma_UO_grid, flci_adaptive_st_cv_grid, method = "fmm", ties = mean) 
+  c <- flci_st_c_function(corr)
+  
+  Kb <- length(b_grid)
+  corr2 <- corr^2
+  rej_prob <- c(Kb)
+  for (j in 1:Kb) {
+    b <- b_grid[j]
+    pos = function (t) ( 1-pnorm((c-corr*(t-st-b))/sqrt(1-corr2)) + pnorm((-c-corr*(t-st-b))/sqrt(1-corr2)) ) * dnorm(t-b)
+    neg = function (t) ( 1-pnorm((c-corr*(t+st-b))/sqrt(1-corr2)) + pnorm((-c-corr*(t+st-b))/sqrt(1-corr2)) ) * dnorm(t-b)
+    zero = function (t) ( 1-pnorm((c-corr*(-b))/sqrt(1-corr2)) + pnorm((-c-corr*(-b))/sqrt(1-corr2)) ) * dnorm(t-b)
+    
+    rej_prob[j] <- integrate(pos, lower = st, upper = Inf)$value +
+      integrate(zero, lower = -st, upper = st)$value + 
+      integrate(neg, lower = -Inf, upper = -st)$value
+  }
+  
   # Show the values in an HTML table ----
   output$values <- renderTable({
     data.frame(
-      Estimator = c("Estimate", "Std Error", "Max Regret", "Threshold"),
-      Y_U = c(YU, paste("(",sigmaU,")",sep=""), paste(100*round(1/(1-corr^2)-1,2), "%", sep=""), NA),
-      Y_R = c(YR, paste("(",sigmaR,")",sep=""), "∞", NA),
+      Estimator = c("Estimate", "Std Error", "Threshold", "Max Regret", "Bias-aware 5% CI", "Best coverage", "Worst coverage"),
+      Y_U = c(YU, paste("(",sigmaU,")",sep=""), NA, paste(100*round(1/(1-corr^2)-1,2), "%", sep=""),
+              paste("[",round(YU-1.96*sigmaU,decimal),",",round(YU+1.96*sigmaU,decimal),"]", sep=""),"95%","95%"),
+      Y_R = c(YR, paste("(",sigmaR,")",sep=""), NA, "∞", NA, NA, NA),
       # Adaptive = c(0.36, NA, "44%", NA),
-      Soft_threshold = c(adaptive_st, NA, paste(regret_st*100, "%", sep=""), round(st,2)),
+      Soft_threshold = c(adaptive_st, NA,  round(st,2),paste(regret_st*100, "%", sep=""),
+                         paste("[",round(adaptive_st-c*sigmaU,decimal),",",round(adaptive_st+c*sigmaU,decimal),"]"),
+                         paste(100*round(1-min(rej_prob),2), "%", sep=""), paste(100*round(1-max(rej_prob),2), "%", sep="")),
       # Pre_test = c(0.26, NA, paste(regret_ht*100, "%", sep=""), "1.96"),
       stringsAsFactors = FALSE)
   })
@@ -184,31 +208,40 @@ server <- function(input, output,session) {
     paste("The correlation coefficient between YU and (YR-YU) is ", paste(round(corr,2),",",sep=""),
           "which implies the efficient GMM estimate when YR is correctly specified is ",GMM,
           " and the efficiency of YU relative to the efficient GMM estimate is ", paste(round(1-corr^2,2),".",sep=""),
-          "If YR is subject to potential bias, then the line labeled ''oracle'' in the figure below illustrates the smallest possible risk that can be achieved when only a bound on the bias magnitude is known.",
+          "If YR is subject to potential bias, then the line labeled ''Oracle'' in the figure below illustrates the smallest possible risk that can be achieved when only a bound on the bias magnitude is known.",
           "Adaptation seeks to minimize the maximum regret, which is the worst-case deviation from this oracle risk function.")
   })
   output$st_output <- renderText({
-    paste("Given the relative efficiency of YU and the efficient GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), "The maximum regret in this case is",paste(regret_st*100, "%.", sep=""))
+    paste("The risk of this adaptive soft-threshold estimator is shown on the figure to illustrate the large efficiency gain when bias is small.",
+          "The maximum regret in this case is",paste(regret_st*100, "%,", sep=""),"which is the closet performance one can get relative to the oracle." )
   })
-  
+  output$cv_output <- renderText({
+    paste("If the bias in YR is no larger than 1*std(YR-YU), a critical value of ",  round(c,2) , 
+          "(instead of 1.96) centered at the adaptive soft threshold estimate with std = sigmaU ensures 95% coverage. Adaptation his CI is shorter than the one centered at YU due to the bias-efficiency trade-off. ",
+          "If the bias is unrestricted, this CI can be used used with consideration of the best and worst coverage scenarios.",
+          "In contrast, the CI centered at YU has 95% coverage, regardless of the bias.")
+  })
   if (-st < tO & tO < st) {
     output$estimate_output <- renderText({
-      paste("Since (YR-YU)/std(YR-YU) = ",tO,
+      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+            "Since (YR-YU)/std(YR-YU) = ",tO,
             "does not exceed the threshold, the adaptive soft thresholding estimator maintains to be the efficient GMM estimate, yielding",
             paste(adaptive_st,".",sep=""))
       })
   }
   if (tO <=-st ) {
     output$estimate_output <- renderText({
-      paste("Since (YR-YU)/std(YR-YU) = ",tO,
-            "is negative and below the threshold, the adaptive soft thresholding estimator translates YU toward the GMM efficient estimate, yielding",
+      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+            "Since (YR-YU)/std(YR-YU) = ",tO,
+            "is negative and below the threshold, the adaptive soft thresholding estimator translates YU towards the GMM efficient estimate, yielding",
             paste(adaptive_st,".",sep=""))
     })
   }
   if (tO >= st ) {
     output$estimate_output <- renderText({
-      paste("Since (YR-YU)/std(YR-YU) = ",tO,
-            "is positive and above the threshold, the adaptive soft thresholding estimator translates YU toward the efficient GMM estimate, yielding",
+      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+            "Since (YR-YU)/std(YR-YU) = ",tO,
+            "is positive and above the threshold, the adaptive soft thresholding estimator translates YU towards the efficient GMM estimate, yielding",
             paste(adaptive_st,".",sep=""))
     })
   }
