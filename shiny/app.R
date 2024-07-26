@@ -32,9 +32,17 @@ ui <- fluidPage(
       ),
   fluidRow(
     column(6,numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets to sigmaR^2):", value = 0.09^2, step = 0.1)),
-           column(6, actionButton("compute", "Adapt"))
+    column(6,textOutput("sigmaO"))
     ),
-    
+
+  fluidRow(
+    column(6, actionButton("compute", "Adapt")),
+    column(6, sliderInput("slider",
+                          "Please select an upper bound for bias as an input for the fixed-length confidence interval (FLCI) around the adaptive estimator (in the multiples of std(YR-YU)):",
+                          min = 0,
+                          max = 9,
+                          value = 1))
+  ),
     fluidRow(
              div(
                style = "display: flex; justify-content: center; flex-direction: column; align-items: center;",
@@ -77,8 +85,17 @@ server <- function(input, output,session) {
   observe({
     # Update VUR to default value based on sigmaR
     updateNumericInput(session, "VUR", value = input$sigmaR^2)
+    
+    
+  })
+  
+  output$sigmaO <- renderText({
+    paste("The bias in YR has a simple estimate YR-YU = ", round(input$YR-input$YU,2),
+      ". We can conjecture the true bias in the unit of its standard error std(YR-YU) = ", 
+          round(sqrt((input$sigmaR)^2-2*input$VUR+(input$sigmaU)^2),2), sep="")
   })
   observeEvent(input$compute, {
+    
     YU <- as.numeric(input$YU)
     sigmaU <- as.numeric(input$sigmaU)
     YR <- as.numeric(input$YR)
@@ -90,7 +107,6 @@ server <- function(input, output,session) {
     VO <- VR - 2 * VUR + VU
     VUO <- (VUR - VU)
     corr <- VUO / sqrt(VO) / sqrt(VU)
-  
   
   Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
   
@@ -133,7 +149,9 @@ server <- function(input, output,session) {
   
   ### Calculate the coverage distortion
   Sigma_UO_grid <- tanh(seq(-3, -0.05, 0.05))
-  flci_st_c_function <-  splinefun(Sigma_UO_grid, flci_adaptive_st_cv_grid, method = "fmm", ties = mean) 
+  B_FLCI <- input$slider
+  
+  flci_st_c_function <-  splinefun(Sigma_UO_grid, flci_adaptive_st_cv_grid[B_FLCI+1,], method = "fmm", ties = mean) 
   c <- flci_st_c_function(corr)
   
   Kb <- length(b_grid)
@@ -149,11 +167,11 @@ server <- function(input, output,session) {
       integrate(zero, lower = -st, upper = st)$value + 
       integrate(neg, lower = -Inf, upper = -st)$value
   }
-  
+  flci_title <- TeX("1*$\\sigma_O$-FLCI")
   # Show the values in an HTML table ----
   output$values <- renderTable({
     data.frame(
-      Estimator = c("Estimate", "Std Error", "Threshold", "Max Regret", "Bias-aware 5% CI", "Best coverage", "Worst coverage"),
+      Estimator = c("Estimate", "Std Error", "Threshold", "Max Regret", "FLCI" , "Best coverage", "Worst coverage"),
       Y_U = c(YU, paste("(",sigmaU,")",sep=""), NA, paste(100*round(1/(1-corr^2)-1,2), "%", sep=""),
               paste("[",round(YU-1.96*sigmaU,decimal),",",round(YU+1.96*sigmaU,decimal),"]", sep=""),"95%","95%"),
       Y_R = c(YR, paste("(",sigmaR,")",sep=""), NA, "∞", NA, NA, NA),
@@ -185,7 +203,7 @@ server <- function(input, output,session) {
     # Plotting using ggplot2
     ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
       geom_line(size=1.2) +
-      labs(x = TeX("b/$\\sigma_O$"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+      labs(x = TeX("b/std(YR-YU)"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
       scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
       ylim(c(min(risk_oracle-0.1), max(risk_function_st)+0.1)) +
       theme_minimal() +
@@ -212,39 +230,40 @@ server <- function(input, output,session) {
           "Adaptation seeks to minimize the maximum regret, which is the worst-case deviation from this oracle risk function.")
   })
   output$st_output <- renderText({
-    paste("The risk of this adaptive soft-threshold estimator is shown on the figure to illustrate the large efficiency gain when bias is small.",
+    paste("The risk of this adaptive soft-threshold estimator is shown in the figure to illustrate the large efficiency gain when bias is small.",
           "The maximum regret in this case is",paste(regret_st*100, "%,", sep=""),"which is the closet performance one can get relative to the oracle." )
   })
   output$cv_output <- renderText({
-    paste("If the bias in YR is no larger than 1*std(YR-YU), a critical value of ",  round(c,2) , 
-          "(instead of 1.96) centered at the adaptive soft threshold estimate with std = sigmaU ensures 95% coverage. Adaptation his CI is shorter than the one centered at YU due to the bias-efficiency trade-off. ",
+    paste("If the bias in YR is no larger than",B_FLCI,"*std(YR-YU), a critical value of ",  round(c,2) , 
+          "(instead of 1.96) centered at the adaptive soft threshold estimate with std = sigmaU ensures 95% coverage. This CI is different from the one centered at YU due to the bias-efficiency trade-off. ",
           "If the bias is unrestricted, this CI can be used used with consideration of the best and worst coverage scenarios.",
           "In contrast, the CI centered at YU has 95% coverage, regardless of the bias.")
   })
   if (-st < tO & tO < st) {
     output$estimate_output <- renderText({
-      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+      paste("Given the relative efficiency of YU and GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
             "Since (YR-YU)/std(YR-YU) = ",tO,
-            "does not exceed the threshold, the adaptive soft thresholding estimator maintains to be the efficient GMM estimate, yielding",
+            "does not exceed the threshold, the adaptive soft thresholding estimator maintains to be the GMM estimate, yielding",
             paste(adaptive_st,".",sep=""))
       })
   }
   if (tO <=-st ) {
     output$estimate_output <- renderText({
-      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+      paste("Given the relative efficiency of YU and GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
             "Since (YR-YU)/std(YR-YU) = ",tO,
-            "is negative and below the threshold, the adaptive soft thresholding estimator translates YU towards the GMM efficient estimate, yielding",
+            "is negative and below the threshold, the adaptive soft thresholding estimator translates YU towards the GMM estimate, yielding",
             paste(adaptive_st,".",sep=""))
     })
   }
   if (tO >= st ) {
     output$estimate_output <- renderText({
-      paste("Given the relative efficiency of YU and the GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
+      paste("Given the relative efficiency of YU and GMM, the soft threshold that achieves optimal adaptation is ", paste(round(st,2),".",sep=""), 
             "Since (YR-YU)/std(YR-YU) = ",tO,
-            "is positive and above the threshold, the adaptive soft thresholding estimator translates YU towards the efficient GMM estimate, yielding",
+            "is positive and above the threshold, the adaptive soft thresholding estimator translates YU towards the GMM estimate, yielding",
             paste(adaptive_st,".",sep=""))
     })
   }
+  
   })
 }
 
