@@ -32,7 +32,7 @@ ui <- fluidPage(
       ),
   fluidRow(
     column(6,numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets to sigmaR^2):", value = 0.09^2, step = 0.1)),
-    column(6,textOutput("sigmaO"))
+    column(6,uiOutput("sigmaO"))
     ),
 
   fluidRow(
@@ -57,14 +57,14 @@ ui <- fluidPage(
       column(12,
              div(
                conditionalPanel(
-                 style = "margin-top: 10px;",
+                 style = "list-style-type: disc; margin-top: 10px;",
                  condition = "input.compute > 0",
                  h4("Explanation for Adaptation"),
                  tags$ul(
-                   tags$li(textOutput("corr_output")),
-                   tags$li(textOutput("estimate_output")),
-                   tags$li(textOutput("st_output")),
-                   tags$li(textOutput("cv_output"))
+                   tags$li(style = "margin-bottom: 10px;",textOutput("corr_output")),
+                   tags$li(style = "margin-bottom: 10px;",textOutput("estimate_output")),
+                   tags$li(style = "margin-bottom: 10px;",textOutput("st_output")),
+                   tags$li(style = "margin-bottom: 10px;",textOutput("cv_output"))
                  )
                )
              )
@@ -89,10 +89,11 @@ server <- function(input, output,session) {
     
   })
   
-  output$sigmaO <- renderText({
-    paste("The bias in YR has a simple estimate YR-YU = ", round(input$YR-input$YU,2),
-      ". We can conjecture the true bias in the unit of its standard error std(YR-YU) = ", 
-          round(sqrt((input$sigmaR)^2-2*input$VUR+(input$sigmaU)^2),2), sep="")
+  output$sigmaO <- renderUI({
+    HTML(paste("<b>The bias in YR has a simple estimate YR-YU = </b>", round(input$YR-input$YU,2),
+      ".<br> <b>The standard error of this estimate is std(YR-YU) = </b>", 
+          round(sqrt((input$sigmaR)^2-2*input$VUR+(input$sigmaU)^2),2), ".",sep="")
+    )
   })
   observeEvent(input$compute, {
     
@@ -236,7 +237,7 @@ server <- function(input, output,session) {
   output$cv_output <- renderText({
     paste("If the bias in YR is no larger than",B_FLCI,"*std(YR-YU), a critical value of ",  round(c,2) , 
           "(instead of 1.96) centered at the adaptive soft threshold estimate with std = sigmaU ensures 95% coverage. This CI is different from the one centered at YU due to the bias-efficiency trade-off. ",
-          "If the bias is unrestricted, this CI can be used used with consideration of the best and worst coverage scenarios.",
+          "If the bias is unrestricted, this CI can be used with consideration of the best and worst coverage scenarios.",
           "In contrast, the CI centered at YU has 95% coverage, regardless of the bias.")
   })
   if (-st < tO & tO < st) {
