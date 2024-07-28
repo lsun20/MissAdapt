@@ -38,7 +38,7 @@ ui <- fluidPage(
   fluidRow(
     column(6, actionButton("compute", "Adapt")),
     column(6, sliderInput("slider",
-                          "Please select an upper bound for bias as an input for the fixed-length confidence interval (FLCI) around the adaptive estimator (in the multiples of std(YR-YU)):",
+                          "Please specify an upper bound on the bias of YR in multiples of std(YR-YU). This bound will be used to construct a fixed-length confidence interval (FLCI). Larger bounds yield longer FLCIs with better worst case coverage.",
                           min = 0,
                           max = 9,
                           value = 1))
