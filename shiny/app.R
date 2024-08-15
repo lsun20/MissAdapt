@@ -128,8 +128,10 @@ server <- function(input, output,session) {
   risk_function_st <- corr^2 * Eb(st) + 1 - corr^2 
   risk_oracle <- corr^2 * rho_b_over_sigma + 1 - corr^2
   
+  risk_st <- round(max(risk_function_st),2)-1
   regret_st <- round(max(risk_function_st/risk_oracle),2)-1
-  
+  regret_nonlinear_function <- splinefun(Sigma_UO_grid, adaptive_nonlinear_regret_grid, method = "fmm", ties = mean)
+  regret_nonlinear <- round(regret_nonlinear_function(abs(corr)),2)-1
   # Use simulation to calculate the risk function for the pre-test estimator that switches btw Y_U and Y_R
   # sims <- 100000
   # x <- rnorm(sims, 0, 1)
@@ -172,13 +174,13 @@ server <- function(input, output,session) {
   # Show the values in an HTML table ----
   output$values <- renderTable({
     data.frame(
-      Estimator = c("Estimate", "Std Error", "Threshold", "Max Regret", "FLCI" , "Best coverage", "Worst coverage"),
-      Y_U = c(YU, paste("(",sigmaU,")",sep=""), NA, paste(100*round(1/(1-corr^2)-1,2), "%", sep=""),
+      Estimator = c("Estimate", "Std Error", "Threshold", "Max Regret", "Max Risk", "FLCI" , "Best coverage", "Worst coverage"),
+      Y_U = c(YU, paste("(",sigmaU,")",sep=""), NA, paste(100*round(1/(1-corr^2)-1,2), "%", sep=""), "0%",
               paste("[",round(YU-1.96*sigmaU,decimal),",",round(YU+1.96*sigmaU,decimal),"]", sep=""),"95%","95%"),
-      Y_R = c(YR, paste("(",sigmaR,")",sep=""), NA, "∞", NA, NA, NA),
+      Y_R = c(YR, paste("(",sigmaR,")",sep=""), NA, "∞", "∞", NA, NA, NA),
       # Adaptive = c(0.36, NA, "44%", NA),
-      Soft_threshold = c(adaptive_st, NA,  round(st,2),paste(regret_st*100, "%", sep=""),
-                         paste("[",round(adaptive_st-c*sigmaU,decimal),",",round(adaptive_st+c*sigmaU,decimal),"]"),
+      Soft_threshold = c(adaptive_st, NA,  round(st,2),paste(regret_st*100, "%", sep=""),paste(risk_st*100, "%", sep=""),
+                         paste("[",round(adaptive_st-c*sigmaU,decimal),",",round(adaptive_st+c*sigmaU,decimal),"]", sep=""),
                          paste(100*round(1-min(rej_prob),2), "%", sep=""), paste(100*round(1-max(rej_prob),2), "%", sep="")),
       # Pre_test = c(0.26, NA, paste(regret_ht*100, "%", sep=""), "1.96"),
       stringsAsFactors = FALSE)
@@ -204,7 +206,7 @@ server <- function(input, output,session) {
     # Plotting using ggplot2
     ggplot(df_long, aes(x = b_grid_scale, y = y, linetype = series, color = series)) +
       geom_line(size=1.2) +
-      labs(x = TeX("b/std(YR-YU)"), y = TeX("MSE Relative to $\\sigma^2_U$"), title = NULL) +
+      labs(x = TeX("b/std(YR-YU)"), y = TeX("Risk (MSE) Relative to $\\sigma^2_U$"), title = NULL) +
       scale_x_continuous(breaks = c(-3, -2, -1, 0, 1, 2, 3), labels = c('-9', '-4', '-1', '0', '1', '4', '9')) +
       ylim(c(min(risk_oracle-0.1), max(risk_function_st)+0.1)) +
       theme_minimal() +
@@ -232,7 +234,8 @@ server <- function(input, output,session) {
   })
   output$st_output <- renderText({
     paste("The risk of this adaptive soft-threshold estimator is shown in the figure to illustrate the large efficiency gain when bias is small.",
-          "The maximum regret in this case is",paste(regret_st*100, "%,", sep=""),"which is the closet performance one can get relative to the oracle." )
+          "The maximum regret in this case is",paste(regret_st*100, "%.", sep=""),"The closest performance one can get relative to the oracle is",
+          paste(regret_nonlinear*100, "%,", sep=""), "achieved using a fully nonlinear estimator.","Soft-thresholding provides a simple approximation with minimal efficiency loss." )
   })
   output$cv_output <- renderText({
     paste("If the bias in YR is no larger than",B_FLCI,"*std(YR-YU), a critical value of ",  round(c,2) , 
