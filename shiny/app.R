@@ -90,10 +90,35 @@ server <- function(input, output,session) {
   })
   
   output$sigmaO <- renderUI({
-    HTML(paste("<b>The bias in YR has a simple estimate YR-YU = </b>", round(input$YR-input$YU,2),
-      ".<br> <b>The standard error of this estimate is std(YR-YU) = </b>", 
-          round(sqrt((input$sigmaR)^2-2*input$VUR+(input$sigmaU)^2),2), ".",sep="")
-    )
+    # Initialize an empty HTML string
+    output_html <- ""
+    
+    if(input$sigmaR >= input$sigmaU) {
+      output_html <- "<b>YU is no less precise than YR and already optimal. There is no need to adapt. Please do not proceed.</b>"
+    } else {
+      bias <- round(input$YR - input$YU, 2)
+      std_error <- sqrt((input$sigmaR)^2 - 2*input$VUR + (input$sigmaU)^2)
+      
+      # Construct the HTML for bias and standard error
+      output_html <- paste("<b>The bias in YR has a simple estimate YR-YU = </b>", bias, 
+                           ".<br><b>The standard error of this estimate is std(YR-YU) = </b>", 
+                           round(std_error,2), ".", sep="")
+      
+      Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
+      corr <- (input$VUR - (input$sigmaU)^2) / std_error / input$sigmaU
+      
+      # Check conditions and append to the HTML string
+      if(abs(corr) > max(Sigma_UO_grid)) {
+        output_html <- paste(output_html,  "<br><b>Error:</b> YR is very precise relative to YU and adaptation incurs large regret. Proceed with caution.")
+      }
+      
+      if(abs(corr) < min(Sigma_UO_grid)) {
+        output_html <- paste(output_html,  "<br><b>Error:</b> YU is not much less precise than YR. Adaptation won't do much.:)")
+      }
+    }
+    
+    # Return the final HTML
+    HTML(output_html)
   })
   observeEvent(input$compute, {
     
@@ -102,7 +127,7 @@ server <- function(input, output,session) {
     YR <- as.numeric(input$YR)
     sigmaR <- as.numeric(input$sigmaR)
     VUR <- as.numeric(input$VUR)
-    
+
     VU <- sigmaU^2
     VR <- sigmaR^2
     VO <- VR - 2 * VUR + VU
@@ -110,7 +135,7 @@ server <- function(input, output,session) {
     corr <- VUO / sqrt(VO) / sqrt(VU)
   
   Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
-  
+   
   st.function <- splinefun(Sigma_UO_grid, st_thresholds_grid, method = "fmm", ties = mean)
   st <- st.function(abs(corr))
   
