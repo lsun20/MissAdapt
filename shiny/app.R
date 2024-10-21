@@ -31,7 +31,8 @@ ui <- fluidPage(
         column(6, numericInput("sigmaR", "Standard error (sigmaR):", value = 0.09))
       ),
   fluidRow(
-    column(6,numericInput("VUR", "Cov(YU,YR) (default assumes YR is efficient, and sets to sigmaR^2):", value = 0.09^2, step = 0.1)),
+    column(6,numericInput("VUR", "Cov(YU,YR): If YU and YR are estimated on independent datasets, please enter zero. The default assumes that YU and YR are estimated from the same dataset, with YR being the efficient estimator. In this case, the covariance is equal to sigmaR^2 (Hausman,1978)."
+                          , value = 0.09^2, step = 0.1)),
     column(6,uiOutput("sigmaO"))
     ),
 
@@ -107,6 +108,9 @@ server <- function(input, output,session) {
       Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
       corr <- (input$VUR - (input$sigmaU)^2) / std_error / input$sigmaU
       
+      output_html <- paste(output_html, "<br><b>The correlation coefficient between YU and (YR-YU) is therefore </b>", paste(round(corr,2),",",sep=""),
+          "<b>which implies the relative efficiency of YU  is </b>", paste(round(1-corr^2,2),".",sep=""),
+          "<br><b>This relative efficiency determines the amount of adaptation regret.</b>")
       # Check conditions and append to the HTML string
       if(abs(corr) > max(Sigma_UO_grid)) {
         output_html <- paste(output_html,  "<br><b>Error:</b> YR is very precise relative to YU and adaptation incurs large regret. Proceed with caution.")
