@@ -108,8 +108,8 @@ server <- function(input, output,session) {
       Sigma_UO_grid <- abs(tanh(seq(-3, -0.05, 0.05)))
       corr <- (input$VUR - (input$sigmaU)^2) / std_error / input$sigmaU
       
-      output_html <- paste(output_html, "<br><b>The correlation coefficient between YU and (YR-YU) is therefore </b>", paste(round(corr,2),",",sep=""),
-          "<b>which implies the relative efficiency of YU  is </b>", paste(round(1-corr^2,2),".",sep=""),
+      output_html <- paste(output_html, "<br><b>The correlation coefficient between YU and (YR-YU) is therefore rho =</b>", paste(round(corr,2),",",sep=""),
+          "<b>which implies the relative efficiency of YU  is 1-rho^2 =</b>", paste(round(1-corr^2,2),".",sep=""),
           "<br><b>This relative efficiency determines the amount of adaptation regret.</b>")
       # Check conditions and append to the HTML string
       if(abs(corr) > max(Sigma_UO_grid)) {
